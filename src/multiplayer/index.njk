@@ -1,0 +1,100 @@
+---
+layout: base.njk
+title: Two players
+pageId: multiplayer
+---
+{% block content %}
+<section class="game-shell" data-multiplayer-root>
+  <header class="game-heading">
+    <div>
+      <p class="eyebrow">Two players</p>
+      <h1 data-game-title>Start a match</h1>
+    </div>
+    <div class="connection-pill" data-connection-state><i></i><span>Connecting</span></div>
+  </header>
+
+  <div class="game-status" data-game-status role="status">
+    <strong>Choose your waters.</strong>
+    <span>Create a private match, then send the link to a friend.</span>
+  </div>
+
+  <section class="lobby-panel" data-view="lobby">
+    <div class="choice-grid">
+      <button class="choice-card is-selected" type="button" data-mode="quick" aria-pressed="true">
+        <span class="choice-card__grid choice-card__grid--quick" aria-hidden="true"></span>
+        <strong>Quick</strong>
+        <span>7 × 7 · ships 3, 2, 2</span>
+      </button>
+      <button class="choice-card" type="button" data-mode="standard" aria-pressed="false">
+        <span class="choice-card__grid choice-card__grid--standard" aria-hidden="true"></span>
+        <strong>Standard</strong>
+        <span>10 × 10 · classic fleet</span>
+      </button>
+    </div>
+    <button class="button button--primary" type="button" data-create-game>Create private match</button>
+    <p class="fine-print">Rooms expire after 24 hours. No account or name is required.</p>
+  </section>
+
+  <section class="waiting-panel" data-view="waiting" hidden>
+    <div class="room-code-block">
+      <span>Room code</span>
+      <strong data-room-code>—</strong>
+    </div>
+    <label class="share-field">
+      <span>Private invitation</span>
+      <span class="share-field__input"><input data-share-url readonly><button type="button" data-copy-link>Copy link</button></span>
+    </label>
+    <div class="waiting-animation" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <p>Waiting for player two to open the link…</p>
+  </section>
+
+  <section class="placement-panel" data-view="placement" hidden>
+    <div class="placement-layout">
+      <div class="board-wrap">
+        <div class="board" data-placement-board aria-label="Your fleet placement"></div>
+      </div>
+      <aside class="fleet-controls">
+        <h2>Your fleet</h2>
+        <div data-fleet-list></div>
+        <div class="button-row">
+          <button class="button button--quiet" type="button" data-rotate>Rotate</button>
+          <button class="button button--quiet" type="button" data-randomize>Random</button>
+          <button class="button button--quiet" type="button" data-clear-fleet>Clear</button>
+        </div>
+        <button class="button button--primary" type="button" data-ready disabled>Lock fleet</button>
+        <p class="fine-print">Select a ship, then choose its first square. You can also use the arrow keys and Enter.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="battle-panel" data-view="battle" hidden>
+    <div class="turn-banner" data-turn-banner></div>
+    <div class="battle-layout">
+      <section>
+        <h2>Opponent’s waters</h2>
+        <div class="board-wrap"><div class="board board--target" data-target-board aria-label="Opponent's waters"></div></div>
+      </section>
+      <section>
+        <h2>Your waters</h2>
+        <div class="board-wrap board-wrap--small"><div class="board" data-own-board aria-label="Your waters"></div></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="result-panel" data-view="result" hidden>
+    <p class="eyebrow">Match complete</p>
+    <h2 data-result-title>The fleet is down.</h2>
+    <p data-result-copy></p>
+    <a class="button button--primary" href="/multiplayer/">New match</a>
+  </section>
+
+  <section class="error-panel" data-view="error" hidden>
+    <p class="eyebrow">Unable to continue</p>
+    <h2 data-error-title>Something went off course.</h2>
+    <p data-error-copy></p>
+    <a class="button button--primary" href="/multiplayer/">Return to harbour</a>
+  </section>
+</section>
+{% endblock %}
+
+{% block scripts %}<script type="module" src="/assets/js/multiplayer.js"></script>{% endblock %}

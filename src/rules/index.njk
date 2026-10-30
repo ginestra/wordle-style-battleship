@@ -1,0 +1,36 @@
+---
+layout: base.njk
+title: Rules
+pageId: rules
+---
+{% block content %}
+<header class="page-heading">
+  <p class="eyebrow">How to play</p>
+  <h1>Rules of the water</h1>
+  <p>Place every ship, then take turns choosing one untouched square on your opponent’s grid.</p>
+</header>
+
+<div class="rules-grid">
+  <section class="rule-block">
+    <span class="rule-number">01</span>
+    <h2>Place</h2>
+    <p>Ships may be horizontal or vertical. They may touch, but they cannot overlap or leave the board.</p>
+  </section>
+  <section class="rule-block">
+    <span class="rule-number">02</span>
+    <h2>Fire</h2>
+    <p>Each player takes exactly one shot per turn. A miss, hit, or sunk ship passes play to the other player.</p>
+  </section>
+  <section class="rule-block">
+    <span class="rule-number">03</span>
+    <h2>Win</h2>
+    <p>The first player to hit every occupied square in the opposing fleet wins.</p>
+  </section>
+</div>
+
+<section class="fleet-table" aria-labelledby="fleets-title">
+  <h2 id="fleets-title">Fleet sizes</h2>
+  <div><strong>Quick</strong><span>7 × 7 board</span><span>3, 2, 2</span></div>
+  <div><strong>Standard</strong><span>10 × 10 board</span><span>5, 4, 3, 3, 2</span></div>
+</section>
+{% endblock %}

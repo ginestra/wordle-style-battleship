@@ -1,0 +1,39 @@
+---
+layout: base.njk
+title: Play
+pageId: home
+---
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">Battleship, stripped back</p>
+  <h1>Find the fleet.<br>Sink every square.</h1>
+  <p class="lede">A quiet game of coordinates for one or two players. No accounts. No clutter.</p>
+</section>
+
+<section class="mode-grid" aria-labelledby="choose-mode">
+  <h2 id="choose-mode" class="visually-hidden">Choose a game mode</h2>
+  <a class="mode-card mode-card--daily" href="/daily/">
+    <span class="mode-card__number">01</span>
+    <span class="mode-card__body">
+      <strong>Daily waters</strong>
+      <span>One shared fleet. A new board every day.</span>
+    </span>
+    <span class="mode-card__arrow" aria-hidden="true">→</span>
+  </a>
+  <a class="mode-card mode-card--multi" href="/multiplayer/">
+    <span class="mode-card__number">02</span>
+    <span class="mode-card__body">
+      <strong>Two players</strong>
+      <span>Place your ships. Share a private link. Take turns.</span>
+    </span>
+    <span class="mode-card__arrow" aria-hidden="true">→</span>
+  </a>
+</section>
+
+<section class="legend-strip" aria-label="Board legend">
+  <span><i class="cell-swatch cell-swatch--ship"></i>Your ship</span>
+  <span><i class="cell-swatch cell-swatch--miss"></i>Miss</span>
+  <span><i class="cell-swatch cell-swatch--hit"></i>Hit</span>
+  <span><i class="cell-swatch cell-swatch--sunk"></i>Sunk</span>
+</section>
+{% endblock %}

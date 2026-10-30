@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{{ description or site.description }}">
+    <meta name="theme-color" content="#f4f3ef">
+    <title>{{ title }} · {{ site.name }}</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <script id="app-config" type="application/json">{{ appConfig | json | safe }}</script>
+    <script type="module" src="/assets/js/app.js"></script>
+    {% block head %}{% endblock %}
+  </head>
+  <body data-page="{{ pageId or 'page' }}">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="wordmark" href="/" aria-label="Fleet home">
+        <span class="wordmark-grid" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>FLEET</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="/daily/">Daily</a>
+        <a href="/multiplayer/">Two players</a>
+        <a href="/rules/">Rules</a>
+      </nav>
+      <button class="icon-button" type="button" data-theme-toggle aria-label="Change colour theme">
+        <span data-theme-icon aria-hidden="true">◐</span>
+      </button>
+    </header>
+
+    <main id="main" class="site-main">
+      {% block content %}{{ content | safe }}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <span>One shot at a time.</span>
+      <span aria-hidden="true">■ ■ ■</span>
+    </footer>
+    <div class="toast-region" data-toast-region aria-live="polite" aria-atomic="true"></div>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

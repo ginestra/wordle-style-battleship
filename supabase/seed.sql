@@ -1,0 +1,1 @@
+-- The game does not require seed data. Daily puzzles are generated in the browser.

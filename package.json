@@ -1,0 +1,31 @@
+{
+  "name": "wordle-style-battleship",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A minimal Wordle-style Battleship game for two players or one daily puzzle.",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build:site": "eleventy",
+    "build:js": "esbuild src/assets/js/app.js src/assets/js/multiplayer.js src/assets/js/daily.js --bundle --format=esm --outdir=dist/assets/js --sourcemap --minify",
+    "build": "npm run clean && npm run build:site && npm run build:js",
+    "start": "npm run build && eleventy --serve",
+    "check": "node --test test/*.test.js && npm run build",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:test": "supabase test db",
+    "smoke:supabase": "node --env-file=.env scripts/smoke-supabase.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.76.1"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.1.2",
+    "dotenv": "^17.2.3",
+    "esbuild": "^0.25.11",
+    "supabase": "^2.53.6"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

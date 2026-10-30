@@ -1,0 +1,39 @@
+---
+layout: base.njk
+title: Daily waters
+pageId: daily
+---
+{% block content %}
+<section class="game-shell" data-daily-root>
+  <header class="game-heading">
+    <div>
+      <p class="eyebrow">Daily waters · <span data-daily-number></span></p>
+      <h1>Find today’s fleet</h1>
+    </div>
+    <div class="daily-date" data-daily-date></div>
+  </header>
+
+  <div class="game-status" data-daily-status role="status">
+    <strong>Five ships are hidden.</strong>
+    <span>Choose any untouched square. Finish in as few shots as you can.</span>
+  </div>
+
+  <div class="daily-layout">
+    <div class="board-wrap">
+      <div class="board board--target" data-daily-board aria-label="Daily fleet board"></div>
+    </div>
+    <aside class="daily-sidebar">
+      <div class="stat-pair">
+        <div><strong data-shot-count>0</strong><span>shots</span></div>
+        <div><strong data-sunk-count>0/5</strong><span>sunk</span></div>
+      </div>
+      <h2>Fleet</h2>
+      <div data-daily-fleet></div>
+      <button class="button button--primary" type="button" data-share-result hidden>Share result</button>
+      <p class="fine-print" data-next-game></p>
+    </aside>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}<script type="module" src="/assets/js/daily.js"></script>{% endblock %}
