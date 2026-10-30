@@ -67,6 +67,17 @@ npm run check
 
 The static output is written to `dist/`. Configure the two public environment values in the hosting provider before building.
 
+## GitHub Pages
+
+The checked-in workflow deploys the site from `main` to the repository Pages URL. In the GitHub repository:
+
+1. Open **Settings → Secrets and variables → Actions → Variables**.
+2. Add `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` using the same browser-safe values as `.env`.
+3. Open **Settings → Pages** and select **GitHub Actions** as the source.
+4. Run **Deploy to GitHub Pages** from the Actions tab, or push to `main`.
+
+`npm run build:github` applies the `/wordle-style-battleship/` path prefix required by the project Pages URL. Remove that prefix if the site later uses a custom domain at its root.
+
 ## Local Supabase
 
 The checked-in `supabase/config.toml` enables local anonymous sign-ins and uses the Eleventy development URL. With a container runtime running:

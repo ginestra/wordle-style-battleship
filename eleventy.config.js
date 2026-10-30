@@ -1,6 +1,8 @@
 import "dotenv/config";
+import { HtmlBasePlugin } from "@11ty/eleventy";
 
 export default function (eleventyConfig) {
+  eleventyConfig.addPlugin(HtmlBasePlugin);
   eleventyConfig.addPassthroughCopy({ "src/assets/css": "assets/css" });
   eleventyConfig.addPassthroughCopy({ "src/assets/icons": "assets/icons" });
 

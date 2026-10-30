@@ -9,6 +9,7 @@
     "build:site": "eleventy",
     "build:js": "esbuild src/assets/js/app.js src/assets/js/multiplayer.js src/assets/js/daily.js --bundle --format=esm --outdir=dist/assets/js --sourcemap --minify",
     "build": "npm run clean && npm run build:site && npm run build:js",
+    "build:github": "npm run clean && eleventy --pathprefix=/wordle-style-battleship/ && npm run build:js",
     "start": "npm run build && eleventy --serve",
     "check": "node --test test/*.test.js && npm run build",
     "supabase:start": "supabase start",
