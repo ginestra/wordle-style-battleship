@@ -54,6 +54,7 @@ create table public.shots (
 
 create index game_players_user_id_idx on public.game_players(user_id);
 create index shots_game_id_idx on public.shots(game_id, turn_number);
+create index games_expires_at_idx on public.games(expires_at);
 
 alter table public.games enable row level security;
 alter table public.game_players enable row level security;
