@@ -19,6 +19,7 @@ class MultiplayerController {
     this.selectedShip = 0;
     this.orientation = "h";
     this.wasMyTurn = false;
+    this.resultDialogDismissed = false;
     this.placementCells = [];
     this.targetCells = [];
     this.ownCells = [];
@@ -62,6 +63,8 @@ class MultiplayerController {
     this.root.querySelector("[data-randomize]").addEventListener("click", () => { this.fleet = randomFleet(this.state.game.mode); this.selectedShip = -1; this.renderPlacement(); });
     this.root.querySelector("[data-clear-fleet]").addEventListener("click", () => { this.resetFleet(); this.renderPlacement(); });
     this.root.querySelector("[data-ready]").addEventListener("click", () => this.lockFleet());
+    this.root.querySelector("[data-dismiss-result]").addEventListener("click", () => this.dismissResultDialog());
+    this.root.querySelector("[data-result-dialog]").addEventListener("cancel", () => { this.resultDialogDismissed = true; });
   }
 
   async createGame() {
@@ -286,11 +289,30 @@ class MultiplayerController {
     resultPanel.hidden = !completed;
     if (completed) {
       const won = this.state.game.winner_id === this.userId;
+      const resultTitle = won ? "You sank the fleet." : "Your fleet went down.";
+      const resultCopy = won ? "Clean work. The opposing waters are yours." : "The other player found every ship first.";
       this.setStatus(won ? "Victory." : "Match complete.", "Both final fleets remain visible below.");
-      this.root.querySelector("[data-result-title]").textContent = won ? "You sank the fleet." : "Your fleet went down.";
-      this.root.querySelector("[data-result-copy]").textContent = won ? "Clean work. The opposing waters are yours." : "The other player found every ship first.";
+      this.root.querySelector("[data-result-title]").textContent = resultTitle;
+      this.root.querySelector("[data-result-copy]").textContent = resultCopy;
+      this.showResultDialog(won);
       document.title = `${won ? "Victory" : "Defeat"} · Fleet`;
     }
+  }
+
+  showResultDialog(won) {
+    if (this.resultDialogDismissed) return;
+    const dialog = this.root.querySelector("[data-result-dialog]");
+    this.root.querySelector("[data-result-dialog-title]").textContent = won ? "You won." : "You lost.";
+    this.root.querySelector("[data-result-dialog-copy]").textContent = won
+      ? "You found and sank every opposing ship. Dismiss this message to inspect the final boards."
+      : "Your opponent found and sank every ship. Dismiss this message to inspect the final boards.";
+    if (!dialog.open) dialog.showModal();
+  }
+
+  dismissResultDialog() {
+    this.resultDialogDismissed = true;
+    const dialog = this.root.querySelector("[data-result-dialog]");
+    if (dialog.open) dialog.close();
   }
 
   async fire(row, col) {

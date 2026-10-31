@@ -98,6 +98,15 @@ pageId: multiplayer
     <p data-error-copy></p>
     <a class="button button--primary" href="/multiplayer/">Return to harbour</a>
   </section>
+
+  <dialog class="result-dialog" data-result-dialog aria-labelledby="result-dialog-title" aria-describedby="result-dialog-copy">
+    <div class="result-dialog__surface">
+      <p class="eyebrow">Match complete</p>
+      <h2 id="result-dialog-title" data-result-dialog-title></h2>
+      <p id="result-dialog-copy" data-result-dialog-copy></p>
+      <button class="button button--primary" type="button" data-dismiss-result>See final boards</button>
+    </div>
+  </dialog>
 </section>
 {% endblock %}
 
