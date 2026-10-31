@@ -41,6 +41,8 @@ class MultiplayerController {
   }
 
   bindControls() {
+    const nameInput = this.root.querySelector("[data-host-name]");
+    nameInput.addEventListener("input", () => nameInput.setCustomValidity(""));
     this.root.querySelectorAll("[data-mode]").forEach((button) => {
       button.addEventListener("click", () => {
         this.mode = button.dataset.mode;
@@ -61,10 +63,19 @@ class MultiplayerController {
 
   async createGame() {
     const button = this.root.querySelector("[data-create-game]");
+    const nameInput = this.root.querySelector("[data-host-name]");
+    const hostName = nameInput.value.trim().replace(/\s+/g, " ");
+    if (!hostName) {
+      nameInput.focus();
+      nameInput.setCustomValidity("Enter your name to create an invitation.");
+      nameInput.reportValidity();
+      return;
+    }
+    nameInput.setCustomValidity("");
     button.disabled = true;
     button.textContent = "Creating…";
     try {
-      const created = await rpc("create_game", { p_mode: this.mode });
+      const created = await rpc("create_game", { p_mode: this.mode, p_host_name: hostName });
       this.gameId = created.game_id;
       const hostUrl = `${location.pathname}#game=${encodeURIComponent(this.gameId)}`;
       const inviteUrl = `${location.origin}${location.pathname}#game=${encodeURIComponent(this.gameId)}&join=${encodeURIComponent(created.join_token)}`;
@@ -106,7 +117,10 @@ class MultiplayerController {
 
   render() {
     const { game, players } = this.state;
-    this.root.querySelector("[data-game-title]").textContent = `Room ${game.room_code}`;
+    const isHost = players.some((player) => player.user_id === this.userId && player.seat === 1);
+    this.root.querySelector("[data-game-title]").textContent = isHost
+      ? `${game.host_name} · Room ${game.room_code}`
+      : `${game.host_name} invited you to Room ${game.room_code}`;
     if (players.length < 2) {
       this.showView("waiting");
       this.setStatus("Room ready.", "Share the private invitation with one other player.");
@@ -134,11 +148,8 @@ class MultiplayerController {
       return;
     }
     if (game.status === "completed") {
-      this.showView("result");
-      const won = game.winner_id === this.userId;
-      this.root.querySelector("[data-result-title]").textContent = won ? "You sank the fleet." : "Your fleet went down.";
-      this.root.querySelector("[data-result-copy]").textContent = won ? "Clean work. The opposing waters are yours." : "The other player found every ship first.";
-      document.title = `${won ? "Victory" : "Defeat"} · Fleet`;
+      this.showView("battle");
+      this.renderBattle();
     }
   }
 
@@ -211,16 +222,19 @@ class MultiplayerController {
 
   renderBattle() {
     const config = GAME_MODES[this.state.game.mode];
+    const completed = this.state.game.status === "completed";
     const myTurn = this.state.game.current_turn === this.userId;
     const banner = this.root.querySelector("[data-turn-banner]");
-    banner.textContent = myTurn ? "Your turn — choose one square" : "Opponent’s turn";
-    banner.classList.toggle("is-your-turn", myTurn);
-    this.setStatus(myTurn ? "Your shot." : "Hold position.", myTurn ? "Choose one untouched square in the opponent’s waters." : "The board will update when your opponent fires.");
+    banner.textContent = completed ? "Final positions" : myTurn ? "Your turn — choose one square" : "Opponent’s turn";
+    banner.classList.toggle("is-your-turn", myTurn && !completed);
+    if (!completed) {
+      this.setStatus(myTurn ? "Your shot." : "Hold position.", myTurn ? "Choose one untouched square in the opponent’s waters." : "The board will update when your opponent fires.");
+    }
 
-    if (myTurn && !this.wasMyTurn) {
+    if (!completed && myTurn && !this.wasMyTurn) {
       document.title = "Your turn · Fleet";
       navigator.vibrate?.(100);
-    } else if (!myTurn) document.title = "Waiting · Fleet";
+    } else if (!completed && !myTurn) document.title = "Waiting · Fleet";
     this.wasMyTurn = myTurn;
 
     if (!this.targetCells.length || this.targetCells.length !== config.size ** 2) {
@@ -229,9 +243,16 @@ class MultiplayerController {
       });
       this.ownCells = createBoard(this.root.querySelector("[data-own-board]"), config.size, { interactive: false, label: "your water" });
     }
-    this.targetCells.forEach((cell) => { cell.className = "board-cell"; cell.disabled = !myTurn; });
+    this.targetCells.forEach((cell) => { cell.className = "board-cell"; cell.disabled = completed || !myTurn; });
     this.ownCells.forEach((cell) => cell.className = "board-cell");
     (this.state.own_fleet || []).forEach((ship) => cellsForShip(ship).forEach(({ row, col }) => cellAt(this.ownCells, config.size, row, col).classList.add("is-ship")));
+    if (completed) {
+      (this.state.opponent_fleet || []).forEach((ship) => cellsForShip(ship).forEach(({ row, col }) => {
+        const cell = cellAt(this.targetCells, config.size, row, col);
+        cell.classList.add("is-ship");
+        cell.setAttribute("aria-label", `${coordinate(row, col)}, revealed ship`);
+      }));
+    }
 
     for (const shot of this.state.shots) {
       const own = shot.target_id === this.userId;
@@ -241,6 +262,16 @@ class MultiplayerController {
       cell.classList.add(`is-${shot.result}`);
       cell.setAttribute("aria-label", `${coordinate(shot.row, shot.col)}, ${shot.result}`);
       if (!own) cell.disabled = true;
+    }
+
+    const resultPanel = this.root.querySelector("[data-result-panel]");
+    resultPanel.hidden = !completed;
+    if (completed) {
+      const won = this.state.game.winner_id === this.userId;
+      this.setStatus(won ? "Victory." : "Match complete.", "Both final fleets remain visible below.");
+      this.root.querySelector("[data-result-title]").textContent = won ? "You sank the fleet." : "Your fleet went down.";
+      this.root.querySelector("[data-result-copy]").textContent = won ? "Clean work. The opposing waters are yours." : "The other player found every ship first.";
+      document.title = `${won ? "Victory" : "Defeat"} · Fleet`;
     }
   }
 

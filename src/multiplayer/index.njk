@@ -19,6 +19,11 @@ pageId: multiplayer
   </div>
 
   <section class="lobby-panel" data-view="lobby">
+    <label class="name-field">
+      <span>Your name</span>
+      <input type="text" data-host-name maxlength="32" autocomplete="name" placeholder="e.g. Alex" required>
+      <small>This will appear in the private invitation.</small>
+    </label>
     <div class="choice-grid">
       <button class="choice-card is-selected" type="button" data-mode="quick" aria-pressed="true">
         <span class="choice-card__grid choice-card__grid--quick" aria-hidden="true"></span>
@@ -32,7 +37,7 @@ pageId: multiplayer
       </button>
     </div>
     <button class="button button--primary" type="button" data-create-game>Create private match</button>
-    <p class="fine-print">Rooms expire after 24 hours. No account or name is required.</p>
+    <p class="fine-print">Rooms expire after 24 hours. No account is required.</p>
   </section>
 
   <section class="waiting-panel" data-view="waiting" hidden>
@@ -79,13 +84,12 @@ pageId: multiplayer
         <div class="board-wrap board-wrap--small"><div class="board" data-own-board aria-label="Your waters"></div></div>
       </section>
     </div>
-  </section>
-
-  <section class="result-panel" data-view="result" hidden>
-    <p class="eyebrow">Match complete</p>
-    <h2 data-result-title>The fleet is down.</h2>
-    <p data-result-copy></p>
-    <a class="button button--primary" href="/multiplayer/">New match</a>
+    <section class="result-panel" data-result-panel hidden>
+      <p class="eyebrow">Match complete</p>
+      <h2 data-result-title>The fleet is down.</h2>
+      <p data-result-copy></p>
+      <a class="button button--primary" href="/multiplayer/">New match</a>
+    </section>
   </section>
 
   <section class="error-panel" data-view="error" hidden>

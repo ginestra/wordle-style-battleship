@@ -120,7 +120,7 @@ a { color: inherit; }
 
 .game-shell { max-width: 1040px; margin-inline: auto; }
 .game-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
-.game-heading h1 { font-size: clamp(2.5rem, 6vw, 5rem); }
+.game-heading h1 { overflow-wrap: anywhere; font-size: clamp(2.5rem, 6vw, 5rem); }
 .connection-pill { display: inline-flex; align-items: center; gap: .55rem; padding: .55rem .75rem; border: 1px solid var(--line); color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
 .connection-pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
 .connection-pill.is-online i { background: var(--success); }
@@ -129,6 +129,11 @@ a { color: inherit; }
 .game-status span { color: var(--muted); line-height: 1.45; }
 
 .choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.name-field { display: grid; gap: .55rem; max-width: 520px; margin-bottom: 1.25rem; }
+.name-field > span { font-size: .75rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.name-field input { width: 100%; min-height: 50px; padding: .8rem 1rem; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.name-field input:focus { border-color: var(--line-strong); outline: 2px solid var(--player); outline-offset: 1px; }
+.name-field small { color: var(--muted); }
 .choice-card { min-height: 230px; display: grid; align-content: end; justify-items: start; gap: .5rem; padding: 1.5rem; border: 1px solid var(--line); background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
 .choice-card:hover { border-color: var(--line-strong); }
 .choice-card.is-selected { border: 2px solid var(--player); background: var(--surface); }
@@ -190,6 +195,7 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .turn-banner.is-your-turn { background: var(--player); color: white; border-color: var(--player); }
 .battle-layout { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(220px, .56fr); gap: clamp(2rem, 6vw, 5rem); align-items: start; }
 .result-panel, .error-panel { max-width: 680px; padding: clamp(2rem, 6vw, 4rem); border: 1px solid var(--line); background: var(--surface); }
+.battle-panel .result-panel { margin-top: clamp(2.5rem, 6vw, 5rem); }
 .result-panel h2, .error-panel h2 { margin: 0 0 1rem; font-size: clamp(2rem, 5vw, 4rem); line-height: 1; letter-spacing: -.05em; }
 .result-panel p:not(.eyebrow), .error-panel p:not(.eyebrow) { color: var(--muted); line-height: 1.6; }
 

@@ -6,6 +6,7 @@ revoke all on schema private from public, anon, authenticated;
 create table public.games (
   id uuid primary key default gen_random_uuid(),
   room_code text not null unique check (room_code ~ '^[A-F0-9]{6}$'),
+  host_name text not null check (char_length(host_name) between 1 and 32),
   join_token_hash text not null,
   mode text not null check (mode in ('quick', 'standard')),
   status text not null default 'waiting' check (status in ('waiting', 'placing', 'active', 'completed')),
@@ -138,7 +139,7 @@ exception when others then
 end;
 $$;
 
-create or replace function public.create_game(p_mode text)
+create or replace function public.create_game(p_mode text, p_host_name text)
 returns jsonb
 language plpgsql
 security definer
@@ -149,13 +150,16 @@ declare
   v_game_id uuid;
   v_room_code text;
   v_join_token text;
+  v_host_name text;
 begin
   if v_user is null then raise exception 'authentication required'; end if;
   if p_mode not in ('quick', 'standard') then raise exception 'invalid game mode'; end if;
+  v_host_name := regexp_replace(btrim(p_host_name), '[[:space:]]+', ' ', 'g');
+  if char_length(v_host_name) not between 1 and 32 then raise exception 'invalid host name'; end if;
   v_room_code := upper(substr(encode(extensions.gen_random_bytes(4), 'hex'), 1, 6));
   v_join_token := encode(extensions.gen_random_bytes(24), 'hex');
-  insert into public.games (room_code, join_token_hash, mode)
-  values (v_room_code, encode(extensions.digest(v_join_token, 'sha256'), 'hex'), p_mode)
+  insert into public.games (room_code, host_name, join_token_hash, mode)
+  values (v_room_code, v_host_name, encode(extensions.digest(v_join_token, 'sha256'), 'hex'), p_mode)
   returning id into v_game_id;
   insert into public.game_players (game_id, user_id, seat) values (v_game_id, v_user, 1);
   return jsonb_build_object('game_id', v_game_id, 'room_code', v_room_code, 'join_token', v_join_token);
@@ -320,9 +324,10 @@ declare
 begin
   if v_user is null or not exists (select 1 from public.game_players where game_id = p_game_id and user_id = v_user) then raise exception 'game not found'; end if;
   select jsonb_build_object(
-    'game', jsonb_build_object('id', g.id, 'room_code', g.room_code, 'mode', g.mode, 'status', g.status, 'current_turn', g.current_turn, 'winner_id', g.winner_id, 'expires_at', g.expires_at),
+    'game', jsonb_build_object('id', g.id, 'room_code', g.room_code, 'host_name', g.host_name, 'mode', g.mode, 'status', g.status, 'current_turn', g.current_turn, 'winner_id', g.winner_id, 'expires_at', g.expires_at),
     'players', coalesce((select jsonb_agg(jsonb_build_object('user_id', p.user_id, 'seat', p.seat, 'ready', p.ready) order by p.seat) from public.game_players p where p.game_id = g.id), '[]'::jsonb),
     'own_fleet', coalesce((select f.ships from public.fleets f where f.game_id = g.id and f.user_id = v_user), '[]'::jsonb),
+    'opponent_fleet', case when g.status = 'completed' then coalesce((select f.ships from public.fleets f where f.game_id = g.id and f.user_id <> v_user), '[]'::jsonb) else '[]'::jsonb end,
     'shots', coalesce((select jsonb_agg(jsonb_build_object('shooter_id', s.shooter_id, 'target_id', s.target_id, 'row', s.row, 'col', s.col, 'result', s.result, 'turn_number', s.turn_number) order by s.turn_number) from public.shots s where s.game_id = g.id), '[]'::jsonb)
   ) into v_result from public.games g where g.id = p_game_id;
   if v_result is null then raise exception 'game not found'; end if;
@@ -334,8 +339,8 @@ revoke execute on function private.validate_fleet(text, jsonb) from public, anon
 revoke execute on function private.is_game_player(uuid, uuid) from public, anon;
 grant usage on schema private to authenticated;
 grant execute on function private.is_game_player(uuid, uuid) to authenticated;
-revoke execute on function public.create_game(text), public.join_game(uuid, text), public.submit_fleet(uuid, jsonb), public.fire_shot(uuid, integer, integer), public.get_game_state(uuid) from public, anon;
-grant execute on function public.create_game(text), public.join_game(uuid, text), public.submit_fleet(uuid, jsonb), public.fire_shot(uuid, integer, integer), public.get_game_state(uuid) to authenticated;
+revoke execute on function public.create_game(text, text), public.join_game(uuid, text), public.submit_fleet(uuid, jsonb), public.fire_shot(uuid, integer, integer), public.get_game_state(uuid) from public, anon;
+grant execute on function public.create_game(text, text), public.join_game(uuid, text), public.submit_fleet(uuid, jsonb), public.fire_shot(uuid, integer, integer), public.get_game_state(uuid) to authenticated;
 
 do $$
 begin
