@@ -81,7 +81,8 @@ a { color: inherit; }
 .icon-button:hover { background: var(--water); }
 
 .site-main { flex: 1; padding-block: clamp(3.5rem, 8vw, 7.5rem); }
-.site-footer { min-height: 76px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; }
+.site-footer { min-height: 76px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .75rem 2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; }
+.site-footer a { color: var(--ink); text-decoration-thickness: 1px; text-underline-offset: .2em; }
 
 .eyebrow { margin: 0 0 1rem; color: var(--player); font-size: .74rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
 .hero { max-width: 880px; }
