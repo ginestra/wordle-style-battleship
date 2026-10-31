@@ -35,7 +35,8 @@ class MultiplayerController {
       if (invitation.gameId) {
         this.gameId = invitation.gameId;
         if (invitation.joinToken) await rpc("join_game", { p_game_id: this.gameId, p_join_token: invitation.joinToken });
-        window.history.replaceState(null, "", `${location.pathname}#game=${encodeURIComponent(this.gameId)}`);
+        const playerParameter = invitation.joinToken || invitation.player === "guest" ? "&player=guest" : "";
+        window.history.replaceState(null, "", `${location.pathname}#game=${encodeURIComponent(this.gameId)}${playerParameter}`);
         await this.subscribe();
         await this.refreshQueue.runNow();
       }
@@ -360,7 +361,7 @@ class MultiplayerController {
 
 function parseInvitation() {
   const parameters = new URLSearchParams(location.hash.replace(/^#/, ""));
-  return { gameId: parameters.get("game"), joinToken: parameters.get("join") };
+  return { gameId: parameters.get("game"), joinToken: parameters.get("join"), player: parameters.get("player") };
 }
 
 function humanError(error) {
