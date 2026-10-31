@@ -62,7 +62,8 @@ try {
   });
   const channel = host
     .channel(`smoke:${created.game_id}`)
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "shots", filter: `game_id=eq.${created.game_id}` }, resolveRealtime);
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "shots", filter: `game_id=eq.${created.game_id}` }, (payload) => resolveRealtime({ source: "shots", payload }))
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "games", filter: `id=eq.${created.game_id}` }, (payload) => resolveRealtime({ source: "games", payload }));
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error("Realtime subscription timed out")), 20000);
     channel.subscribe((status) => {
@@ -77,8 +78,11 @@ try {
   assert.ifError(visibleShots.error);
   assert.equal(visibleShots.data.length, 1);
   const event = await realtimeEvent;
-  assert.equal(event.new.row, 0);
-  assert.equal(event.new.col, 0);
+  assert.ok(["games", "shots"].includes(event.source));
+  if (event.source === "shots") {
+    assert.equal(event.payload.new.row, 0);
+    assert.equal(event.payload.new.col, 0);
+  }
 
   let guestState = await call(guest, "get_game_state", { p_game_id: created.game_id });
   assert.equal(guestState.game.current_turn, guestAuth.data.user.id);

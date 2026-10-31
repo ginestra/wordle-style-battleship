@@ -1,5 +1,6 @@
 import { copyText, showToast } from "./ui.js";
 import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, validateFleet } from "./game-rules.js";
+import { RefreshQueue } from "./refresh-queue.js";
 import { ensureAnonymousSession, getSupabase, rpc } from "./supabase-client.js";
 
 const root = document.querySelector("[data-multiplayer-root]");
@@ -12,6 +13,8 @@ class MultiplayerController {
     this.userId = null;
     this.state = null;
     this.channel = null;
+    this.hasSubscribed = false;
+    this.refreshQueue = new RefreshQueue(() => this.fetchAndRender());
     this.fleet = [];
     this.selectedShip = 0;
     this.orientation = "h";
@@ -33,7 +36,7 @@ class MultiplayerController {
         if (invitation.joinToken) await rpc("join_game", { p_game_id: this.gameId, p_join_token: invitation.joinToken });
         window.history.replaceState(null, "", `${location.pathname}#game=${encodeURIComponent(this.gameId)}`);
         await this.subscribe();
-        await this.refresh();
+        await this.refreshQueue.runNow();
       }
     } catch (error) {
       this.fail(error);
@@ -83,7 +86,7 @@ class MultiplayerController {
       this.root.querySelector("[data-room-code]").textContent = created.room_code;
       this.root.querySelector("[data-share-url]").value = inviteUrl;
       await this.subscribe();
-      await this.refresh();
+      await this.refreshQueue.runNow();
     } catch (error) {
       button.disabled = false;
       button.textContent = "Create private match";
@@ -93,18 +96,23 @@ class MultiplayerController {
 
   async subscribe() {
     if (this.channel) await getSupabase().removeChannel(this.channel);
+    this.hasSubscribed = false;
     this.channel = getSupabase()
       .channel(`game:${this.gameId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${this.gameId}` }, () => this.refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${this.gameId}` }, () => this.refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "shots", filter: `game_id=eq.${this.gameId}` }, () => this.refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${this.gameId}` }, () => this.refreshQueue.schedule())
+      .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${this.gameId}` }, () => this.refreshQueue.schedule())
+      .on("postgres_changes", { event: "*", schema: "public", table: "shots", filter: `game_id=eq.${this.gameId}` }, () => this.refreshQueue.schedule())
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") this.setConnection("online", "Live");
+        if (status === "SUBSCRIBED") {
+          this.setConnection("online", "Live");
+          if (this.hasSubscribed) void this.refreshQueue.runNow();
+          this.hasSubscribed = true;
+        }
         if (["CHANNEL_ERROR", "TIMED_OUT"].includes(status)) this.setConnection("error", "Reconnecting");
       });
   }
 
-  async refresh() {
+  async fetchAndRender() {
     try {
       const state = await rpc("get_game_state", { p_game_id: this.gameId });
       this.state = state;
@@ -150,7 +158,17 @@ class MultiplayerController {
     if (game.status === "completed") {
       this.showView("battle");
       this.renderBattle();
+      void this.stopRealtime();
     }
+  }
+
+  async stopRealtime() {
+    this.refreshQueue.cancel();
+    if (!this.channel) return;
+    const channel = this.channel;
+    this.channel = null;
+    await getSupabase().removeChannel(channel);
+    this.setConnection("online", "Complete");
   }
 
   resetFleet() {
@@ -213,7 +231,7 @@ class MultiplayerController {
     button.textContent = "Locking…";
     try {
       await rpc("submit_fleet", { p_game_id: this.gameId, p_ships: this.fleet });
-      await this.refresh();
+      await this.refreshQueue.runNow();
     } catch (error) {
       button.disabled = false;
       this.fail(error);
@@ -283,10 +301,10 @@ class MultiplayerController {
     try {
       const result = await rpc("fire_shot", { p_game_id: this.gameId, p_row: row, p_col: col });
       showToast(result.result === "miss" ? "Miss" : result.sunk ? "Ship sunk" : "Hit");
-      await this.refresh();
+      await this.refreshQueue.runNow();
     } catch (error) {
       showToast(error.message || "Shot could not be sent");
-      await this.refresh();
+      await this.refreshQueue.runNow();
     }
   }
 
