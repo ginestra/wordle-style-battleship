@@ -97,4 +97,4 @@ Stop the local stack with `npm run supabase:stop`.
 - Browser clients cannot insert or alter game rows, fleets, or shots directly.
 - Security-definer functions validate room access, fleets, turns, duplicate shots, hits, sunk ships, and wins.
 - Invitation tokens are random, stored only as hashes, and passed in URL fragments so they are not sent in normal HTTP requests.
-- Rooms expire after 24 hours. Supabase Cron deletes expired rooms and their related players, fleets, and shots hourly at minute 17 UTC.
+- Rooms expire after 24 hours. Supabase Cron deletes expired rooms and their related players, fleets, and shots daily at 03:17 UTC.
