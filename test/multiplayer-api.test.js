@@ -15,12 +15,14 @@ test("multiplayer API maps game actions to their RPC contracts", async () => {
   await api.getState("game-id");
   await api.submitFleet("game-id", fleet);
   await api.fireShot("game-id", 2, 3);
+  await api.resignGame("game-id");
 
   assert.deepEqual(calls, [
     { name: "create_game", parameters: { p_mode: "quick", p_host_name: "Gi" } },
     { name: "join_game", parameters: { p_game_id: "game-id", p_join_token: "join-token" } },
     { name: "get_game_state_v2", parameters: { p_game_id: "game-id" } },
     { name: "submit_fleet", parameters: { p_game_id: "game-id", p_ships: fleet } },
-    { name: "fire_shot", parameters: { p_game_id: "game-id", p_row: 2, p_col: 3 } }
+    { name: "fire_shot", parameters: { p_game_id: "game-id", p_row: 2, p_col: 3 } },
+    { name: "resign_game", parameters: { p_game_id: "game-id" } }
   ]);
 });

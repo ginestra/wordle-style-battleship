@@ -37,6 +37,7 @@ html[data-theme="dark"] {
   --sunk: #ad72d4;
   --miss: #6d736d;
   --success: #52aa80;
+  --danger: #ff7968;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,6 +57,7 @@ html[data-theme="dark"] {
     --sunk: #ad72d4;
     --miss: #6d736d;
     --success: #52aa80;
+    --danger: #ff7968;
   }
 }
 
@@ -148,6 +150,8 @@ a { color: inherit; }
 .button:hover:not(:disabled), .button:focus-visible { transform: translateY(-1px); }
 .button--primary { background: var(--ink); color: var(--paper); }
 .button--quiet { min-height: 40px; padding: .55rem .8rem; font-size: .78rem; }
+.button--danger { border-color: var(--danger); color: var(--danger); }
+.button--danger:hover:not(:disabled), .button--danger:focus-visible { background: var(--danger); color: var(--surface); }
 .button:disabled { opacity: .35; cursor: not-allowed; }
 .lobby-panel > .button { width: 100%; margin-top: 1rem; }
 .fine-print { color: var(--muted); font-size: .78rem; line-height: 1.45; }
@@ -202,6 +206,7 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .turn-banner.is-your-turn { background: var(--player); color: var(--on-player); border-color: var(--player); }
 .opponent-move-time { display: block; margin: -1rem 0 2rem; color: var(--muted); font-size: .78rem; text-align: center; }
 .battle-layout { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(220px, .56fr); gap: clamp(2rem, 6vw, 5rem); align-items: start; }
+.battle-actions { display: flex; justify-content: flex-end; margin-top: 1.5rem; }
 .result-panel, .error-panel { max-width: 680px; padding: clamp(2rem, 6vw, 4rem); border: 1px solid var(--line); background: var(--surface); }
 .battle-panel .result-panel { margin-top: clamp(2.5rem, 6vw, 5rem); }
 .result-panel h2, .error-panel h2 { margin: 0 0 1rem; font-size: clamp(2rem, 5vw, 4rem); line-height: 1; letter-spacing: -.05em; }
@@ -212,6 +217,7 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .result-dialog h2 { margin: 0 0 1rem; font-size: clamp(2.5rem, 9vw, 5rem); line-height: .95; letter-spacing: -.06em; }
 .result-dialog p:not(.eyebrow) { margin: 0 0 2rem; color: var(--muted); font-size: 1.05rem; line-height: 1.55; }
 .result-dialog .button { width: 100%; }
+.dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 
 .daily-date { color: var(--muted); font: .8rem ui-monospace, monospace; text-transform: uppercase; }
 .stat-pair { display: grid; grid-template-columns: repeat(2, 1fr); margin-bottom: 2rem; border: 1px solid var(--line); }
@@ -252,6 +258,7 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 
 @media (max-width: 440px) {
   :root { --cell-gap: 3px; }
+  .dialog-actions { grid-template-columns: 1fr; }
   .site-header, .site-footer, .site-main { width: min(calc(100% - 20px), var(--max-width)); }
   .site-header nav { gap: .5rem; }
   .site-header nav a { font-size: .68rem; }

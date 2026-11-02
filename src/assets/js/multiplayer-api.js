@@ -24,4 +24,8 @@ export class MultiplayerApi {
   fireShot(gameId, row, col) {
     return this.call("fire_shot", { p_game_id: gameId, p_row: row, p_col: col });
   }
+
+  resignGame(gameId) {
+    return this.call("resign_game", { p_game_id: gameId });
+  }
 }

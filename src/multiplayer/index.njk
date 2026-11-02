@@ -85,6 +85,9 @@ pageId: multiplayer
         <div class="board-wrap board-wrap--small"><div class="board" data-own-board aria-label="Your waters"></div></div>
       </section>
     </div>
+    <div class="battle-actions" data-battle-actions>
+      <button class="button button--quiet button--danger" type="button" data-resign-game>Resign game</button>
+    </div>
     <section class="result-panel" data-result-panel hidden>
       <p class="eyebrow">Match complete</p>
       <h2 data-result-title>The fleet is down.</h2>
@@ -106,6 +109,18 @@ pageId: multiplayer
       <h2 id="result-dialog-title" data-result-dialog-title></h2>
       <p id="result-dialog-copy" data-result-dialog-copy></p>
       <button class="button button--primary" type="button" data-dismiss-result>See final boards</button>
+    </div>
+  </dialog>
+
+  <dialog class="result-dialog" data-resign-dialog aria-labelledby="resign-dialog-title" aria-describedby="resign-dialog-copy">
+    <div class="result-dialog__surface">
+      <p class="eyebrow">End match</p>
+      <h2 id="resign-dialog-title">Resign this game?</h2>
+      <p id="resign-dialog-copy">This ends the match immediately and awards the win to your opponent.</p>
+      <div class="dialog-actions">
+        <button class="button button--quiet" type="button" data-cancel-resign>Keep playing</button>
+        <button class="button button--danger" type="button" data-confirm-resign>Resign game</button>
+      </div>
     </div>
   </dialog>
 </section>

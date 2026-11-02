@@ -2,6 +2,7 @@ import { copyText, showToast } from "./ui.js";
 import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
 import { parseInvitationHash } from "./invitation.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
+import { multiplayerResult } from "./multiplayer-result.js";
 import { shouldRefreshGame } from "./realtime-state.js";
 import { RefreshQueue } from "./refresh-queue.js";
 import { opponentMoveTime } from "./relative-time.js";
@@ -85,6 +86,9 @@ class MultiplayerController {
     this.root.querySelector("[data-randomize]").addEventListener("click", () => { this.fleet = randomFleet(this.state.game.mode); this.selectedShip = -1; this.renderPlacement(); });
     this.root.querySelector("[data-clear-fleet]").addEventListener("click", () => { this.resetFleet(); this.renderPlacement(); });
     this.root.querySelector("[data-ready]").addEventListener("click", () => this.lockFleet());
+    this.root.querySelector("[data-resign-game]").addEventListener("click", () => this.showResignDialog());
+    this.root.querySelector("[data-cancel-resign]").addEventListener("click", () => this.closeResignDialog());
+    this.root.querySelector("[data-confirm-resign]").addEventListener("click", () => this.resignGame());
     this.root.querySelector("[data-dismiss-result]").addEventListener("click", () => this.dismissResultDialog());
     this.root.querySelector("[data-result-dialog]").addEventListener("cancel", () => { this.resultDialogDismissed = true; });
     document.addEventListener("visibilitychange", () => this.handleVisibilityChange());
@@ -302,6 +306,7 @@ class MultiplayerController {
     const completed = this.state.game.status === "completed";
     const myTurn = this.state.game.current_turn === this.userId;
     const banner = this.root.querySelector("[data-turn-banner]");
+    this.root.querySelector("[data-battle-actions]").hidden = completed;
     banner.textContent = completed ? "Final positions" : myTurn ? "Your turn" : "Opponent’s turn";
     banner.classList.toggle("is-your-turn", myTurn && !completed);
     this.renderOpponentMoveTime();
@@ -346,14 +351,13 @@ class MultiplayerController {
     const resultPanel = this.root.querySelector("[data-result-panel]");
     resultPanel.hidden = !completed;
     if (completed) {
-      const won = this.state.game.winner_id === this.userId;
-      const resultTitle = won ? "You sank the fleet." : "Your fleet went down.";
-      const resultCopy = won ? "Clean work. The opposing waters are yours." : "The other player found every ship first.";
-      this.setStatus(won ? "Victory." : "Match complete.", "Both final fleets remain visible below.");
-      this.root.querySelector("[data-result-title]").textContent = resultTitle;
-      this.root.querySelector("[data-result-copy]").textContent = resultCopy;
-      this.showResultDialog(won);
-      document.title = `${won ? "Victory" : "Defeat"} · Fleet`;
+      this.closeResignDialog();
+      const result = multiplayerResult(this.state.game, this.userId);
+      this.setStatus(result.statusTitle, "Both final fleets remain visible below.");
+      this.root.querySelector("[data-result-title]").textContent = result.resultTitle;
+      this.root.querySelector("[data-result-copy]").textContent = result.resultCopy;
+      this.showResultDialog(result);
+      document.title = `${result.won ? "Victory" : "Defeat"} · Fleet`;
     }
   }
 
@@ -368,13 +372,11 @@ class MultiplayerController {
     node.setAttribute("aria-label", display.accessibleText);
   }
 
-  showResultDialog(won) {
+  showResultDialog(result) {
     if (this.resultDialogDismissed) return;
     const dialog = this.root.querySelector("[data-result-dialog]");
-    this.root.querySelector("[data-result-dialog-title]").textContent = won ? "You won." : "You lost.";
-    this.root.querySelector("[data-result-dialog-copy]").textContent = won
-      ? "You found and sank every opposing ship. Dismiss this message to inspect the final boards."
-      : "Your opponent found and sank every ship. Dismiss this message to inspect the final boards.";
+    this.root.querySelector("[data-result-dialog-title]").textContent = result.dialogTitle;
+    this.root.querySelector("[data-result-dialog-copy]").textContent = result.dialogCopy;
     if (!dialog.open) dialog.showModal();
   }
 
@@ -382,6 +384,36 @@ class MultiplayerController {
     this.resultDialogDismissed = true;
     const dialog = this.root.querySelector("[data-result-dialog]");
     if (dialog.open) dialog.close();
+  }
+
+  showResignDialog() {
+    if (this.state?.game?.status !== "active") return;
+    const dialog = this.root.querySelector("[data-resign-dialog]");
+    if (!dialog.open) dialog.showModal();
+  }
+
+  closeResignDialog() {
+    const dialog = this.root.querySelector("[data-resign-dialog]");
+    if (dialog.open) dialog.close();
+  }
+
+  async resignGame() {
+    if (this.state?.game?.status !== "active") return;
+    const button = this.root.querySelector("[data-confirm-resign]");
+    button.disabled = true;
+    button.textContent = "Resigning…";
+    try {
+      await this.api.resignGame(this.gameId);
+      this.closeResignDialog();
+      await this.refreshQueue.runNow();
+    } catch (error) {
+      this.closeResignDialog();
+      showToast(error.message || "The match could not be resigned");
+      await this.refreshQueue.runNow();
+    } finally {
+      button.disabled = false;
+      button.textContent = "Resign game";
+    }
   }
 
   async fire(row, col) {

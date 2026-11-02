@@ -120,7 +120,29 @@ try {
 
   await host.removeChannel(channel);
   console.log(`Completed quick-game state: ${completedStateBytes} bytes for ${hostState.shots.length} shots.`);
-  console.log("Supabase smoke test passed: names, fleet privacy, readiness, turns, completion reveal, and realtime.");
+
+  const resignationGame = await call(host, "create_game", { p_mode: "quick", p_host_name: "Fleet Tester" });
+  await call(guest, "join_game", { p_game_id: resignationGame.game_id, p_join_token: resignationGame.join_token });
+  await call(host, "submit_fleet", { p_game_id: resignationGame.game_id, p_ships: hostFleet });
+  await call(guest, "submit_fleet", { p_game_id: resignationGame.game_id, p_ships: guestFleet });
+  const resignation = await call(guest, "resign_game", { p_game_id: resignationGame.game_id });
+  assert.equal(resignation.reason, "resignation");
+  assert.equal(resignation.winner, hostAuth.data.user.id);
+
+  const resignedHostState = await getState(host, resignationGame.game_id);
+  const resignedGuestState = await getState(guest, resignationGame.game_id);
+  assert.equal(resignedHostState.game.status, "completed");
+  assert.equal(resignedHostState.game.current_turn, null);
+  assert.equal(resignedHostState.game.completion_reason, "resignation");
+  assert.equal(resignedHostState.game.winner_id, hostAuth.data.user.id);
+  assert.deepEqual(resignedHostState.opponent_fleet, guestFleet);
+  assert.deepEqual(resignedGuestState.opponent_fleet, hostFleet);
+
+  await assert.rejects(
+    call(guest, "resign_game", { p_game_id: resignationGame.game_id }),
+    (error) => error?.message === "game is not active"
+  );
+  console.log("Supabase smoke test passed: names, fleet privacy, readiness, turns, resignation, completion reveal, and realtime.");
 } finally {
   await Promise.allSettled([host.removeAllChannels(), guest.removeAllChannels()]);
   host.realtime.disconnect();
