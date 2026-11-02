@@ -1,10 +1,12 @@
 import { copyText, showToast } from "./ui.js";
 import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, validateFleet } from "./game-rules.js";
+import { parseInvitationHash } from "./invitation.js";
+import { MultiplayerApi } from "./multiplayer-api.js";
 import { shouldRefreshGame } from "./realtime-state.js";
 import { RefreshQueue } from "./refresh-queue.js";
 import { opponentMoveTime } from "./relative-time.js";
 import { hasMyShotAt, shotTargetsMe } from "./shot-state.js";
-import { ensureAnonymousSession, getSupabase, rpc } from "./supabase-client.js";
+import { ensureAnonymousSession, getSupabase } from "./supabase-client.js";
 import { VisibilityPause } from "./visibility-pause.js";
 
 const root = document.querySelector("[data-multiplayer-root]");
@@ -12,6 +14,7 @@ const root = document.querySelector("[data-multiplayer-root]");
 class MultiplayerController {
   constructor(element) {
     this.root = element;
+    this.api = new MultiplayerApi();
     this.mode = "quick";
     this.gameId = null;
     this.userId = null;
@@ -38,14 +41,14 @@ class MultiplayerController {
   async start() {
     this.bindControls();
     try {
-      const invitation = parseInvitation();
+      const invitation = parseInvitationHash(location.hash);
       if (!invitation.gameId) {
         this.setConnection("online", "Ready");
         return;
       }
       await this.ensurePlayerSession();
       this.gameId = invitation.gameId;
-      if (invitation.joinToken) await rpc("join_game", { p_game_id: this.gameId, p_join_token: invitation.joinToken });
+      if (invitation.joinToken) await this.api.joinGame(this.gameId, invitation.joinToken);
       const playerParameter = invitation.joinToken || invitation.player === "guest" ? "&player=guest" : "";
       window.history.replaceState(null, "", `${location.pathname}#game=${encodeURIComponent(this.gameId)}${playerParameter}`);
       await this.subscribe();
@@ -101,7 +104,7 @@ class MultiplayerController {
     button.textContent = "Creating…";
     try {
       await this.ensurePlayerSession();
-      const created = await rpc("create_game", { p_mode: this.mode, p_host_name: hostName });
+      const created = await this.api.createGame(this.mode, hostName);
       this.gameId = created.game_id;
       const hostUrl = `${location.pathname}#game=${encodeURIComponent(this.gameId)}`;
       const inviteUrl = `${location.origin}${location.pathname}#game=${encodeURIComponent(this.gameId)}&join=${encodeURIComponent(created.join_token)}`;
@@ -138,7 +141,7 @@ class MultiplayerController {
 
   async fetchAndRender() {
     try {
-      const state = await rpc("get_game_state_v2", { p_game_id: this.gameId });
+      const state = await this.api.getState(this.gameId);
       this.state = state;
       if (state.own_fleet?.length && !this.fleet.length) this.fleet = state.own_fleet;
       this.render();
@@ -275,7 +278,7 @@ class MultiplayerController {
     button.disabled = true;
     button.textContent = "Locking…";
     try {
-      await rpc("submit_fleet", { p_game_id: this.gameId, p_ships: this.fleet });
+      await this.api.submitFleet(this.gameId, this.fleet);
       await this.refreshQueue.runNow();
     } catch (error) {
       button.disabled = false;
@@ -375,7 +378,7 @@ class MultiplayerController {
     if (alreadyShot) return;
     this.targetCells.forEach((cell) => cell.disabled = true);
     try {
-      const result = await rpc("fire_shot", { p_game_id: this.gameId, p_row: row, p_col: col });
+      const result = await this.api.fireShot(this.gameId, row, col);
       showToast(result.result === "miss" ? "Miss" : result.sunk ? "Ship sunk" : "Hit");
       await this.refreshQueue.runNow();
     } catch (error) {
@@ -410,11 +413,6 @@ class MultiplayerController {
     this.showView("error");
     this.root.querySelector("[data-error-copy]").textContent = humanError(error);
   }
-}
-
-function parseInvitation() {
-  const parameters = new URLSearchParams(location.hash.replace(/^#/, ""));
-  return { gameId: parameters.get("game"), joinToken: parameters.get("join"), player: parameters.get("player") };
 }
 
 function humanError(error) {
