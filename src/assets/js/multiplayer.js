@@ -291,7 +291,7 @@ class MultiplayerController {
     const completed = this.state.game.status === "completed";
     const myTurn = this.state.game.current_turn === this.userId;
     const banner = this.root.querySelector("[data-turn-banner]");
-    banner.textContent = completed ? "Final positions" : myTurn ? "Your turn — choose one square" : "Opponent’s turn";
+    banner.textContent = completed ? "Final positions" : myTurn ? "Your turn" : "Opponent’s turn";
     banner.classList.toggle("is-your-turn", myTurn && !completed);
     this.renderOpponentMoveTime();
     if (!completed) {
