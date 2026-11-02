@@ -6,7 +6,7 @@ revoke all on schema private from public, anon, authenticated;
 create table public.games (
   id uuid primary key default gen_random_uuid(),
   room_code text not null unique check (room_code ~ '^[A-F0-9]{6}$'),
-  host_name text not null check (char_length(host_name) between 1 and 32),
+  host_name text not null constraint games_host_name_length check (char_length(host_name) between 1 and 32),
   join_token_hash text not null,
   mode text not null check (mode in ('quick', 'standard')),
   status text not null default 'waiting' check (status in ('waiting', 'placing', 'active', 'completed')),

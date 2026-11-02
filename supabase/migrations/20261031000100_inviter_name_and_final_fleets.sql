@@ -1,12 +1,21 @@
 alter table public.games
-  add column host_name text not null default 'A friend';
+  add column if not exists host_name text not null default 'A friend';
 
-alter table public.games
-  add constraint games_host_name_length check (char_length(host_name) between 1 and 32);
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'games_host_name_length'
+      and conrelid = 'public.games'::regclass
+  ) then
+    alter table public.games
+      add constraint games_host_name_length check (char_length(host_name) between 1 and 32);
+  end if;
+end $$;
 
-drop function public.create_game(text);
+drop function if exists public.create_game(text);
 
-create function public.create_game(p_mode text, p_host_name text)
+create or replace function public.create_game(p_mode text, p_host_name text)
 returns jsonb
 language plpgsql
 security definer
