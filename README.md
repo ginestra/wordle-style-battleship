@@ -47,8 +47,8 @@ npx supabase link --project-ref your-project-ref
 Preview the pending database migration and apply it:
 
 ```bash
-npx supabase db push --dry-run
-npx supabase db push
+npx supabase db push --linked --dry-run
+npx supabase db push --linked
 ```
 
 ## Development
@@ -83,12 +83,31 @@ The checked-in workflow deploys the site from `main` to the repository Pages URL
 The checked-in `supabase/config.toml` enables local anonymous sign-ins and uses the Eleventy development URL. With a container runtime running:
 
 ```bash
-npx supabase start
-npx supabase db reset
+npm run supabase:start
+npm run supabase:reset
 npm run supabase:test
+npm run smoke:supabase:local
 ```
 
 Stop the local stack with `npm run supabase:stop`.
+
+The smoke test creates a complete quick match, checks fleet privacy and realtime updates, and enforces a 4 KiB ceiling for the completed game-state response. It only uses the local stack when run through `smoke:supabase:local`.
+
+## Release checks
+
+Before pushing application changes:
+
+```bash
+npm run check
+npm run build:github
+```
+
+Before applying database changes, reset and smoke-test them locally. Then inspect the hosted migration plan before applying it:
+
+```bash
+npx supabase db push --linked --dry-run
+npx supabase db push --linked
+```
 
 ## Security model
 

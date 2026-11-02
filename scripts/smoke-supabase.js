@@ -20,6 +20,7 @@ async function call(client, name, parameters) {
 }
 
 const getState = (client, gameId) => call(client, "get_game_state_v2", { p_game_id: gameId });
+const maxCompletedQuickStateBytes = 4096;
 
 const hostFleet = [
   { length: 3, row: 0, col: 0, orientation: "h" },
@@ -112,12 +113,13 @@ try {
   assert.deepEqual(hostState.opponent_fleet, guestFleet);
   assert.deepEqual(guestState.opponent_fleet, hostFleet);
   const completedStateBytes = Buffer.byteLength(JSON.stringify(hostState));
-  const legacyState = await call(host, "get_game_state", { p_game_id: created.game_id });
-  const legacyStateBytes = Buffer.byteLength(JSON.stringify(legacyState));
-  assert.ok(completedStateBytes < legacyStateBytes, "compact state must be smaller than legacy state");
+  assert.ok(
+    completedStateBytes <= maxCompletedQuickStateBytes,
+    `completed quick-game state must stay within ${maxCompletedQuickStateBytes} bytes`
+  );
 
   await host.removeChannel(channel);
-  console.log(`Completed quick-game state: ${completedStateBytes} bytes compact, ${legacyStateBytes} bytes legacy for ${hostState.shots.length} shots.`);
+  console.log(`Completed quick-game state: ${completedStateBytes} bytes for ${hostState.shots.length} shots.`);
   console.log("Supabase smoke test passed: names, fleet privacy, readiness, turns, completion reveal, and realtime.");
 } finally {
   await Promise.allSettled([host.removeAllChannels(), guest.removeAllChannels()]);
