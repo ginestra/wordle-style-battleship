@@ -31,21 +31,28 @@ class MultiplayerController {
   async start() {
     this.bindControls();
     try {
-      const session = await ensureAnonymousSession();
-      this.userId = session.user.id;
-      this.setConnection("online", "Connected");
       const invitation = parseInvitation();
-      if (invitation.gameId) {
-        this.gameId = invitation.gameId;
-        if (invitation.joinToken) await rpc("join_game", { p_game_id: this.gameId, p_join_token: invitation.joinToken });
-        const playerParameter = invitation.joinToken || invitation.player === "guest" ? "&player=guest" : "";
-        window.history.replaceState(null, "", `${location.pathname}#game=${encodeURIComponent(this.gameId)}${playerParameter}`);
-        await this.subscribe();
-        await this.refreshQueue.runNow();
+      if (!invitation.gameId) {
+        this.setConnection("online", "Ready");
+        return;
       }
+      await this.ensurePlayerSession();
+      this.gameId = invitation.gameId;
+      if (invitation.joinToken) await rpc("join_game", { p_game_id: this.gameId, p_join_token: invitation.joinToken });
+      const playerParameter = invitation.joinToken || invitation.player === "guest" ? "&player=guest" : "";
+      window.history.replaceState(null, "", `${location.pathname}#game=${encodeURIComponent(this.gameId)}${playerParameter}`);
+      await this.subscribe();
+      await this.refreshQueue.runNow();
     } catch (error) {
       this.fail(error);
     }
+  }
+
+  async ensurePlayerSession() {
+    if (this.userId) return;
+    const session = await ensureAnonymousSession();
+    this.userId = session.user.id;
+    this.setConnection("online", "Connected");
   }
 
   bindControls() {
@@ -85,6 +92,7 @@ class MultiplayerController {
     button.disabled = true;
     button.textContent = "Creating…";
     try {
+      await this.ensurePlayerSession();
       const created = await rpc("create_game", { p_mode: this.mode, p_host_name: hostName });
       this.gameId = created.game_id;
       const hostUrl = `${location.pathname}#game=${encodeURIComponent(this.gameId)}`;
