@@ -71,6 +71,8 @@ try {
       if (status === "CHANNEL_ERROR") { clearTimeout(timeout); reject(new Error("Realtime subscription failed")); }
     });
   });
+  // A freshly reset local stack can report SUBSCRIBED just before CDC is ready.
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 
   const shot = await call(host, "fire_shot", { p_game_id: created.game_id, p_row: 0, p_col: 0 });
   assert.equal(shot.result, "hit");

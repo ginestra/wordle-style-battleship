@@ -15,8 +15,10 @@
     "check": "npm test && npm run build",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset --local",
     "supabase:test": "supabase test db",
-    "smoke:supabase": "node --env-file=.env scripts/smoke-supabase.js"
+    "smoke:supabase": "node --env-file=.env scripts/smoke-supabase.js",
+    "smoke:supabase:local": "node scripts/smoke-supabase-local.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.76.1"
