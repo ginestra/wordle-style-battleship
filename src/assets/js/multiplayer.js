@@ -1,6 +1,7 @@
 import { copyText, showToast } from "./ui.js";
 import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, validateFleet } from "./game-rules.js";
 import { RefreshQueue } from "./refresh-queue.js";
+import { opponentMoveTime } from "./relative-time.js";
 import { ensureAnonymousSession, getSupabase, rpc } from "./supabase-client.js";
 
 const root = document.querySelector("[data-multiplayer-root]");
@@ -23,6 +24,7 @@ class MultiplayerController {
     this.placementCells = [];
     this.targetCells = [];
     this.ownCells = [];
+    this.opponentMoveTimer = window.setInterval(() => this.renderOpponentMoveTime(), 60000);
   }
 
   async start() {
@@ -249,6 +251,7 @@ class MultiplayerController {
     const banner = this.root.querySelector("[data-turn-banner]");
     banner.textContent = completed ? "Final positions" : myTurn ? "Your turn — choose one square" : "Opponent’s turn";
     banner.classList.toggle("is-your-turn", myTurn && !completed);
+    this.renderOpponentMoveTime();
     if (!completed) {
       this.setStatus(myTurn ? "Your shot." : "Hold position.", myTurn ? "Choose one untouched square in the opponent’s waters." : "The board will update when your opponent fires.");
     }
@@ -298,6 +301,17 @@ class MultiplayerController {
       this.showResultDialog(won);
       document.title = `${won ? "Victory" : "Defeat"} · Fleet`;
     }
+  }
+
+  renderOpponentMoveTime() {
+    const node = this.root.querySelector("[data-opponent-move-time]");
+    const display = opponentMoveTime(this.state?.last_opponent_move_at);
+    node.hidden = !display;
+    if (!display) return;
+    node.textContent = display.text;
+    node.dateTime = display.dateTime;
+    node.title = display.accessibleText;
+    node.setAttribute("aria-label", display.accessibleText);
   }
 
   showResultDialog(won) {

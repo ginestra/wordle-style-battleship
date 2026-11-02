@@ -47,6 +47,8 @@ try {
   let hostState = await call(host, "get_game_state", { p_game_id: created.game_id });
   assert.equal(hostState.game.status, "placing");
   assert.equal(hostState.game.host_name, "Fleet Tester");
+  assert.ok(Date.parse(hostState.game.updated_at));
+  assert.equal(hostState.last_opponent_move_at, null);
   assert.deepEqual(hostState.opponent_fleet, []);
 
   await call(guest, "submit_fleet", { p_game_id: created.game_id, p_ships: guestFleet });
@@ -88,6 +90,7 @@ try {
 
   let guestState = await call(guest, "get_game_state", { p_game_id: created.game_id });
   assert.equal(guestState.game.current_turn, guestAuth.data.user.id);
+  assert.ok(Date.parse(guestState.last_opponent_move_at));
   assert.equal(guestState.shots.length, 1);
   assert.equal(guestState.shots[0].result, "hit");
 
