@@ -3,6 +3,7 @@ import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard
 import { shouldRefreshGame } from "./realtime-state.js";
 import { RefreshQueue } from "./refresh-queue.js";
 import { opponentMoveTime } from "./relative-time.js";
+import { hasMyShotAt, shotTargetsMe } from "./shot-state.js";
 import { ensureAnonymousSession, getSupabase, rpc } from "./supabase-client.js";
 import { VisibilityPause } from "./visibility-pause.js";
 
@@ -137,7 +138,7 @@ class MultiplayerController {
 
   async fetchAndRender() {
     try {
-      const state = await rpc("get_game_state", { p_game_id: this.gameId });
+      const state = await rpc("get_game_state_v2", { p_game_id: this.gameId });
       this.state = state;
       if (state.own_fleet?.length && !this.fleet.length) this.fleet = state.own_fleet;
       this.render();
@@ -318,7 +319,7 @@ class MultiplayerController {
     }
 
     for (const shot of this.state.shots) {
-      const own = shot.target_id === this.userId;
+      const own = shotTargetsMe(shot);
       const cell = cellAt(own ? this.ownCells : this.targetCells, config.size, shot.row, shot.col);
       if (!cell) continue;
       cell.classList.remove("is-ship");
@@ -370,7 +371,7 @@ class MultiplayerController {
 
   async fire(row, col) {
     if (this.state.game.current_turn !== this.userId) return;
-    const alreadyShot = this.state.shots.some((shot) => shot.shooter_id === this.userId && shot.row === row && shot.col === col);
+    const alreadyShot = hasMyShotAt(this.state.shots, row, col);
     if (alreadyShot) return;
     this.targetCells.forEach((cell) => cell.disabled = true);
     try {
