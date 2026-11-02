@@ -1,5 +1,5 @@
 import { copyText, showToast } from "./ui.js";
-import { GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom } from "./game-rules.js";
+import { GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom, syncBoardTabStops } from "./game-rules.js";
 
 const root = document.querySelector("[data-daily-root]");
 if (root) initialiseDaily();
@@ -52,6 +52,7 @@ function initialiseDaily() {
       else cell.classList.add(isShipSunk(shot.shipIndex) ? "is-sunk" : "is-hit");
       cell.setAttribute("aria-label", `${coordinate(row, col)}, ${shot.shipIndex === null ? "miss" : isShipSunk(shot.shipIndex) ? "sunk ship" : "hit"}`);
     });
+    syncBoardTabStops(cells);
 
     const sunk = fleet.filter((_, index) => isShipSunk(index)).length;
     root.querySelector("[data-shot-count]").textContent = shots.length;

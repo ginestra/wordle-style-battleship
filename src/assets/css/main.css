@@ -172,6 +172,7 @@ a { color: inherit; }
 .board-wrap { width: 100%; }
 .board-wrap--small { max-width: 360px; }
 .board { --board-size: 10; display: grid; grid-template-columns: repeat(var(--board-size), 1fr); gap: var(--cell-gap); width: 100%; aspect-ratio: 1; }
+.board-row { display: contents; }
 .board-cell { position: relative; aspect-ratio: 1; min-width: 0; padding: 0; border: 0; background: var(--water); color: transparent; cursor: default; }
 button.board-cell { cursor: pointer; }
 button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { background: var(--water-hover); outline: 2px solid var(--ink); outline-offset: 1px; z-index: 1; }

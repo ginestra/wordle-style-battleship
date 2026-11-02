@@ -61,24 +61,81 @@ export function randomFleet(mode, random = Math.random) {
   throw new Error("Could not generate a fleet");
 }
 
+export function nextBoardCellIndex(cells, size, currentIndex, key) {
+  if (!cells.length || currentIndex < 0 || currentIndex >= cells.length) return currentIndex;
+  const row = Math.floor(currentIndex / size);
+  const col = currentIndex % size;
+  let rowStep = 0;
+  let colStep = 0;
+
+  if (key === "ArrowLeft") colStep = -1;
+  else if (key === "ArrowRight") colStep = 1;
+  else if (key === "ArrowUp") rowStep = -1;
+  else if (key === "ArrowDown") rowStep = 1;
+  else if (key === "Home") colStep = 1;
+  else if (key === "End") colStep = -1;
+  else return currentIndex;
+
+  let nextRow = rowStep ? row + rowStep : row;
+  let nextCol = key === "Home" ? 0 : key === "End" ? size - 1 : col + colStep;
+  while (nextRow >= 0 && nextRow < size && nextCol >= 0 && nextCol < size) {
+    const nextIndex = (nextRow * size) + nextCol;
+    if (!cells[nextIndex]?.disabled) return nextIndex;
+    nextRow += rowStep;
+    nextCol += colStep;
+  }
+  return currentIndex;
+}
+
+export function syncBoardTabStops(cells, preferredIndex) {
+  let targetIndex = Number.isInteger(preferredIndex) ? preferredIndex : cells.findIndex((cell) => cell.tabIndex === 0);
+  if (!cells[targetIndex] || cells[targetIndex].disabled) targetIndex = cells.findIndex((cell) => !cell.disabled);
+  cells.forEach((cell, index) => { cell.tabIndex = index === targetIndex ? 0 : -1; });
+  return targetIndex;
+}
+
 export function createBoard(element, size, { interactive = true, onSelect, label = "water" } = {}) {
   element.replaceChildren();
   element.style.setProperty("--board-size", size);
+  element.setAttribute("role", "grid");
+  element.setAttribute("aria-rowcount", size);
+  element.setAttribute("aria-colcount", size);
   const cells = [];
 
   for (let row = 0; row < size; row += 1) {
+    const boardRow = document.createElement("div");
+    boardRow.className = "board-row";
+    boardRow.setAttribute("role", "row");
+    boardRow.setAttribute("aria-rowindex", row + 1);
     for (let col = 0; col < size; col += 1) {
       const cell = document.createElement(interactive ? "button" : "span");
       cell.className = "board-cell";
-      if (interactive) cell.type = "button";
+      cell.setAttribute("role", "gridcell");
+      cell.setAttribute("aria-rowindex", row + 1);
+      cell.setAttribute("aria-colindex", col + 1);
+      if (interactive) {
+        cell.type = "button";
+        cell.tabIndex = -1;
+        const index = (row * size) + col;
+        cell.addEventListener("focus", () => syncBoardTabStops(cells, index));
+        cell.addEventListener("keydown", (event) => {
+          const nextIndex = nextBoardCellIndex(cells, size, index, event.key);
+          if (nextIndex === index && !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          syncBoardTabStops(cells, nextIndex);
+          cells[nextIndex]?.focus();
+        });
+      }
       cell.dataset.row = row;
       cell.dataset.col = col;
       cell.setAttribute("aria-label", `${String.fromCharCode(65 + col)}${row + 1}, ${label}`);
       if (onSelect) cell.addEventListener("click", () => onSelect(row, col));
-      element.append(cell);
+      boardRow.append(cell);
       cells.push(cell);
     }
+    element.append(boardRow);
   }
+  if (interactive) syncBoardTabStops(cells);
   return cells;
 }
 

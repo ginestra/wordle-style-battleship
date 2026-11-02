@@ -1,5 +1,5 @@
 import { copyText, showToast } from "./ui.js";
-import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, validateFleet } from "./game-rules.js";
+import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
 import { parseInvitationHash } from "./invitation.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
 import { shouldRefreshGame } from "./realtime-state.js";
@@ -330,6 +330,7 @@ class MultiplayerController {
       cell.setAttribute("aria-label", `${coordinate(shot.row, shot.col)}, ${shot.result}`);
       if (!own) cell.disabled = true;
     }
+    syncBoardTabStops(this.targetCells);
 
     const resultPanel = this.root.querySelector("[data-result-panel]");
     resultPanel.hidden = !completed;
@@ -377,6 +378,7 @@ class MultiplayerController {
     const alreadyShot = hasMyShotAt(this.state.shots, row, col);
     if (alreadyShot) return;
     this.targetCells.forEach((cell) => cell.disabled = true);
+    syncBoardTabStops(this.targetCells);
     try {
       const result = await this.api.fireShot(this.gameId, row, col);
       showToast(result.result === "miss" ? "Miss" : result.sunk ? "Ship sunk" : "Hit");
