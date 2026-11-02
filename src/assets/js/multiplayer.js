@@ -1,5 +1,6 @@
 import { copyText, showToast } from "./ui.js";
 import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, validateFleet } from "./game-rules.js";
+import { shouldRefreshGame } from "./realtime-state.js";
 import { RefreshQueue } from "./refresh-queue.js";
 import { opponentMoveTime } from "./relative-time.js";
 import { ensureAnonymousSession, getSupabase, rpc } from "./supabase-client.js";
@@ -105,9 +106,9 @@ class MultiplayerController {
     this.hasSubscribed = false;
     this.channel = getSupabase()
       .channel(`game:${this.gameId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${this.gameId}` }, () => this.refreshQueue.schedule())
-      .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${this.gameId}` }, () => this.refreshQueue.schedule())
-      .on("postgres_changes", { event: "*", schema: "public", table: "shots", filter: `game_id=eq.${this.gameId}` }, () => this.refreshQueue.schedule())
+      .on("postgres_changes", { event: "*", schema: "public", table: "games", filter: `id=eq.${this.gameId}` }, (payload) => {
+        if (shouldRefreshGame(this.state?.game?.updated_at, payload)) this.refreshQueue.schedule();
+      })
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           this.setConnection("online", "Live");
