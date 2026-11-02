@@ -4,6 +4,7 @@ import { shouldRefreshGame } from "./realtime-state.js";
 import { RefreshQueue } from "./refresh-queue.js";
 import { opponentMoveTime } from "./relative-time.js";
 import { ensureAnonymousSession, getSupabase, rpc } from "./supabase-client.js";
+import { VisibilityPause } from "./visibility-pause.js";
 
 const root = document.querySelector("[data-multiplayer-root]");
 
@@ -26,6 +27,11 @@ class MultiplayerController {
     this.targetCells = [];
     this.ownCells = [];
     this.opponentMoveTimer = window.setInterval(() => this.renderOpponentMoveTime(), 60000);
+    this.visibilityPause = new VisibilityPause({
+      onPause: () => this.pauseRealtimeForBackground(),
+      onResume: () => this.resumeRealtimeAfterBackground(),
+      onError: (error) => this.fail(error)
+    });
   }
 
   async start() {
@@ -76,6 +82,7 @@ class MultiplayerController {
     this.root.querySelector("[data-ready]").addEventListener("click", () => this.lockFleet());
     this.root.querySelector("[data-dismiss-result]").addEventListener("click", () => this.dismissResultDialog());
     this.root.querySelector("[data-result-dialog]").addEventListener("cancel", () => { this.resultDialogDismissed = true; });
+    document.addEventListener("visibilitychange", () => this.handleVisibilityChange());
   }
 
   async createGame() {
@@ -122,6 +129,7 @@ class MultiplayerController {
           this.setConnection("online", "Live");
           if (this.hasSubscribed) void this.refreshQueue.runNow();
           this.hasSubscribed = true;
+          this.handleVisibilityChange();
         }
         if (["CHANNEL_ERROR", "TIMED_OUT"].includes(status)) this.setConnection("error", "Reconnecting");
       });
@@ -178,12 +186,33 @@ class MultiplayerController {
   }
 
   async stopRealtime() {
+    this.visibilityPause.cancel();
     this.refreshQueue.cancel();
     if (!this.channel) return;
     const channel = this.channel;
     this.channel = null;
     await getSupabase().removeChannel(channel);
     this.setConnection("online", "Complete");
+  }
+
+  handleVisibilityChange() {
+    const canPause = this.gameId && this.channel && this.state?.game?.status !== "completed";
+    this.visibilityPause.setHidden(Boolean(document.hidden && canPause));
+  }
+
+  async pauseRealtimeForBackground() {
+    if (!document.hidden || !this.channel || this.state?.game?.status === "completed") return;
+    this.refreshQueue.cancel();
+    const channel = this.channel;
+    this.channel = null;
+    await getSupabase().removeChannel(channel);
+    this.setConnection("idle", "Paused");
+  }
+
+  async resumeRealtimeAfterBackground() {
+    if (!this.gameId || this.state?.game?.status === "completed") return;
+    await this.subscribe();
+    await this.refreshQueue.runNow();
   }
 
   resetFleet() {
