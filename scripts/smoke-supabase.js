@@ -19,6 +19,8 @@ async function call(client, name, parameters) {
   return data;
 }
 
+const getState = (client, gameId) => call(client, "get_game_state_v2", { p_game_id: gameId });
+
 const hostFleet = [
   { length: 3, row: 0, col: 0, orientation: "h" },
   { length: 2, row: 2, col: 0, orientation: "h" },
@@ -44,7 +46,7 @@ try {
   assert.ok(forbiddenFleetRead.error, "hidden fleets must not be directly readable");
 
   await call(host, "submit_fleet", { p_game_id: created.game_id, p_ships: hostFleet });
-  let hostState = await call(host, "get_game_state", { p_game_id: created.game_id });
+  let hostState = await getState(host, created.game_id);
   assert.equal(hostState.game.status, "placing");
   assert.equal(hostState.game.host_name, "Fleet Tester");
   assert.ok(Date.parse(hostState.game.updated_at));
@@ -52,7 +54,7 @@ try {
   assert.deepEqual(hostState.opponent_fleet, []);
 
   await call(guest, "submit_fleet", { p_game_id: created.game_id, p_ships: guestFleet });
-  hostState = await call(host, "get_game_state", { p_game_id: created.game_id });
+  hostState = await getState(host, created.game_id);
   assert.equal(hostState.game.status, "active");
   assert.equal(hostState.game.current_turn, hostAuth.data.user.id);
   assert.deepEqual(hostState.own_fleet, hostFleet);
@@ -84,11 +86,13 @@ try {
   assert.equal(event.new.id, created.game_id);
   assert.ok(event.new.updated_at);
 
-  let guestState = await call(guest, "get_game_state", { p_game_id: created.game_id });
+  let guestState = await getState(guest, created.game_id);
   assert.equal(guestState.game.current_turn, guestAuth.data.user.id);
   assert.ok(Date.parse(guestState.last_opponent_move_at));
   assert.equal(guestState.shots.length, 1);
   assert.equal(guestState.shots[0].result, "hit");
+  assert.equal(guestState.shots[0].by_me, false);
+  assert.deepEqual(Object.keys(guestState.shots[0]).sort(), ["by_me", "col", "result", "row"]);
 
   const remainingTargets = [
     [1, 0], [2, 0],
@@ -101,16 +105,19 @@ try {
     await call(host, "fire_shot", { p_game_id: created.game_id, p_row: remainingTargets[index][0], p_col: remainingTargets[index][1] });
   }
 
-  hostState = await call(host, "get_game_state", { p_game_id: created.game_id });
-  guestState = await call(guest, "get_game_state", { p_game_id: created.game_id });
+  hostState = await getState(host, created.game_id);
+  guestState = await getState(guest, created.game_id);
   assert.equal(hostState.game.status, "completed");
   assert.equal(hostState.game.winner_id, hostAuth.data.user.id);
   assert.deepEqual(hostState.opponent_fleet, guestFleet);
   assert.deepEqual(guestState.opponent_fleet, hostFleet);
   const completedStateBytes = Buffer.byteLength(JSON.stringify(hostState));
+  const legacyState = await call(host, "get_game_state", { p_game_id: created.game_id });
+  const legacyStateBytes = Buffer.byteLength(JSON.stringify(legacyState));
+  assert.ok(completedStateBytes < legacyStateBytes, "compact state must be smaller than legacy state");
 
   await host.removeChannel(channel);
-  console.log(`Completed quick-game state: ${completedStateBytes} bytes for ${hostState.shots.length} shots.`);
+  console.log(`Completed quick-game state: ${completedStateBytes} bytes compact, ${legacyStateBytes} bytes legacy for ${hostState.shots.length} shots.`);
   console.log("Supabase smoke test passed: names, fleet privacy, readiness, turns, completion reveal, and realtime.");
 } finally {
   await Promise.allSettled([host.removeAllChannels(), guest.removeAllChannels()]);
