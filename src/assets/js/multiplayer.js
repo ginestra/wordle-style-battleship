@@ -25,6 +25,7 @@ class MultiplayerController {
     this.fleet = [];
     this.selectedShip = 0;
     this.orientation = "h";
+    this.isLockingFleet = false;
     this.wasMyTurn = false;
     this.resultDialogDismissed = false;
     this.placementCells = [];
@@ -226,12 +227,18 @@ class MultiplayerController {
 
   renderPlacement() {
     const config = GAME_MODES[this.state.game.mode];
+    const me = this.state.players.find((player) => player.user_id === this.userId);
+    const locked = Boolean(me?.ready || this.isLockingFleet);
     if (!this.placementCells.length || this.placementCells.length !== config.size ** 2) {
       this.placementCells = createBoard(this.root.querySelector("[data-placement-board]"), config.size, {
         onSelect: (row, col) => this.placeSelectedShip(row, col), label: "fleet placement"
       });
     }
-    this.placementCells.forEach((cell) => cell.className = "board-cell");
+    this.placementCells.forEach((cell) => {
+      cell.className = "board-cell";
+      cell.disabled = locked;
+    });
+    syncBoardTabStops(this.placementCells);
     this.fleet.forEach((ship) => {
       if (ship.row === null) return;
       cellsForShip(ship).forEach(({ row, col }) => cellAt(this.placementCells, config.size, row, col)?.classList.add("is-ship"));
@@ -245,6 +252,7 @@ class MultiplayerController {
       row.className = `fleet-item${index === this.selectedShip ? " is-selected" : ""}${placed ? " is-placed" : ""}`;
       const button = document.createElement("button");
       button.type = "button";
+      button.disabled = locked;
       button.innerHTML = Array.from({ length: ship.length }, () => "<i></i>").join("");
       button.setAttribute("aria-label", `${placed ? "Move" : "Place"} ship length ${ship.length}`);
       button.addEventListener("click", () => { this.selectedShip = index; this.orientation = ship.orientation || "h"; this.renderPlacement(); });
@@ -254,8 +262,8 @@ class MultiplayerController {
       list.append(row);
     });
     const valid = this.fleet.every((ship) => ship.row !== null) && validateFleet(this.state.game.mode, this.fleet);
-    const me = this.state.players.find((player) => player.user_id === this.userId);
-    this.root.querySelector("[data-ready]").disabled = !valid || Boolean(me?.ready);
+    this.root.querySelectorAll("[data-rotate], [data-randomize], [data-clear-fleet]").forEach((button) => { button.disabled = locked; });
+    this.root.querySelector("[data-ready]").disabled = !valid || locked;
   }
 
   placeSelectedShip(row, col) {
@@ -275,13 +283,16 @@ class MultiplayerController {
   async lockFleet() {
     if (!validateFleet(this.state.game.mode, this.fleet)) return;
     const button = this.root.querySelector("[data-ready]");
-    button.disabled = true;
+    this.isLockingFleet = true;
+    this.renderPlacement();
     button.textContent = "Locking…";
     try {
       await this.api.submitFleet(this.gameId, this.fleet);
       await this.refreshQueue.runNow();
+      this.isLockingFleet = false;
     } catch (error) {
-      button.disabled = false;
+      this.isLockingFleet = false;
+      this.renderPlacement();
       this.fail(error);
     }
   }
