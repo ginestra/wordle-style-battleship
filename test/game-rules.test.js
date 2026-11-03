@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { anonymisedShipProgress, GAME_MODES, canPlaceShip, cellsForShip, dailySeed, randomFleet, seededRandom, shipHitCount, validateFleet } from "../src/assets/js/game-rules.js";
+import { anonymisedShipProgress, GAME_MODES, canPlaceShip, cellsForShip, dailySeed, randomFleet, seededRandom, validateFleet } from "../src/assets/js/game-rules.js";
+import { invalidQuickFleets, validQuickFleets } from "./fixtures/fleets.js";
 
 test("horizontal and vertical ships occupy the expected cells", () => {
   assert.deepEqual(cellsForShip({ length: 3, row: 1, col: 2, orientation: "h" }), [
@@ -29,19 +30,16 @@ test("random fleets are deterministic and valid", () => {
   }
 });
 
+test("fleet contract fixtures accept valid fleets and reject every invalid fleet", () => {
+  Object.values(validQuickFleets).forEach((fleet) => assert.equal(validateFleet("quick", fleet), true));
+  invalidQuickFleets.forEach(({ label, ships }) => assert.equal(validateFleet("quick", ships), false, label));
+});
+
 test("daily seed uses a UTC calendar date", () => {
   assert.equal(dailySeed(new Date("2026-10-30T23:59:59Z")), "2026-10-30");
 });
 
 test("ship progress reveals hit totals without revealing their positions", () => {
-  const occupied = [
-    { row: 1, col: 1, shipIndex: 0 },
-    { row: 1, col: 2, shipIndex: 0 },
-    { row: 3, col: 3, shipIndex: 1 }
-  ];
-  const shots = [{ row: 1, col: 2 }, { row: 3, col: 3 }, { row: 6, col: 6 }];
-  const hits = shipHitCount(occupied, shots, 0);
-  assert.equal(hits, 1);
-  assert.deepEqual(anonymisedShipProgress(2, hits), [true, false]);
-  assert.equal(shipHitCount(occupied, shots, 1), 1);
+  assert.deepEqual(anonymisedShipProgress(3, 1), [true, false, false]);
+  assert.deepEqual(anonymisedShipProgress(3, 9), [true, true, true]);
 });

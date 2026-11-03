@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
+import { invalidQuickFleets, validQuickFleets } from "../test/fixtures/fleets.js";
 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -22,23 +23,8 @@ async function call(client, name, parameters) {
 const getState = (client, gameId) => call(client, "get_game_state_v2", { p_game_id: gameId });
 const maxCompletedQuickStateBytes = 4096;
 
-const hostFleet = [
-  { length: 3, row: 0, col: 0, orientation: "h" },
-  { length: 2, row: 2, col: 0, orientation: "h" },
-  { length: 2, row: 4, col: 0, orientation: "h" }
-];
-
-const guestFleet = [
-  { length: 3, row: 0, col: 0, orientation: "v" },
-  { length: 2, row: 0, col: 2, orientation: "v" },
-  { length: 2, row: 0, col: 4, orientation: "v" }
-];
-
-const touchingFleet = [
-  { length: 3, row: 0, col: 0, orientation: "h" },
-  { length: 2, row: 1, col: 3, orientation: "v" },
-  { length: 2, row: 4, col: 0, orientation: "h" }
-];
+const hostFleet = validQuickFleets.host;
+const guestFleet = validQuickFleets.guest;
 
 try {
   const hostAuth = await host.auth.signInAnonymously();
@@ -52,11 +38,13 @@ try {
   const forbiddenFleetRead = await host.from("fleets").select("ships");
   assert.ok(forbiddenFleetRead.error, "hidden fleets must not be directly readable");
 
-  await assert.rejects(
-    call(host, "submit_fleet", { p_game_id: created.game_id, p_ships: touchingFleet }),
-    (error) => error?.message === "invalid fleet",
-    "touching ships must be rejected by the server"
-  );
+  for (const { label, ships } of invalidQuickFleets) {
+    await assert.rejects(
+      call(host, "submit_fleet", { p_game_id: created.game_id, p_ships: ships }),
+      (error) => error?.message === "invalid fleet",
+      `${label} must be rejected by the server`
+    );
+  }
 
   await call(host, "submit_fleet", { p_game_id: created.game_id, p_ships: hostFleet });
   let hostState = await getState(host, created.game_id);
@@ -156,7 +144,7 @@ try {
     call(guest, "resign_game", { p_game_id: resignationGame.game_id }),
     (error) => error?.message === "game is not active"
   );
-  console.log("Supabase smoke test passed: names, fleet privacy, readiness, turns, resignation, completion reveal, and realtime.");
+  console.log("Supabase smoke test passed: fleet validation, names, privacy, readiness, turns, resignation, completion reveal, and realtime.");
 } finally {
   await Promise.allSettled([host.removeAllChannels(), guest.removeAllChannels()]);
   host.realtime.disconnect();

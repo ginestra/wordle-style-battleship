@@ -2,6 +2,7 @@ import { copyText, showToast } from "./ui.js";
 import { opponentHitCount, renderGameProgress } from "./fleet-progress.js";
 import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
 import { clearHostInvitation, loadHostInvitation, parseInvitationHash, saveHostInvitation } from "./invitation.js";
+import { IntervalTicker } from "./interval-ticker.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
 import { multiplayerResult } from "./multiplayer-result.js";
 import { shouldRefreshGame } from "./realtime-state.js";
@@ -34,7 +35,7 @@ class MultiplayerController {
     this.placementCells = [];
     this.targetCells = [];
     this.ownCells = [];
-    this.opponentMoveTimer = window.setInterval(() => this.renderOpponentMoveTime(), 60000);
+    this.opponentMoveTicker = new IntervalTicker(() => this.renderOpponentMoveTime(), 60000);
     this.visibilityPause = new VisibilityPause({
       onPause: () => this.pauseRealtimeForBackground(),
       onResume: () => this.resumeRealtimeAfterBackground(),
@@ -223,6 +224,7 @@ class MultiplayerController {
   }
 
   async stopRealtime() {
+    this.opponentMoveTicker.stop();
     this.visibilityPause.cancel();
     this.refreshQueue.cancel();
     if (!this.channel) return;
@@ -239,6 +241,7 @@ class MultiplayerController {
 
   async pauseRealtimeForBackground() {
     if (!document.hidden || !this.channel || this.state?.game?.status === "completed") return;
+    this.opponentMoveTicker.stop();
     this.refreshQueue.cancel();
     const channel = this.channel;
     this.channel = null;
@@ -332,6 +335,8 @@ class MultiplayerController {
   renderBattle() {
     const config = GAME_MODES[this.state.game.mode];
     const completed = this.state.game.status === "completed";
+    if (completed) this.opponentMoveTicker.stop();
+    else this.opponentMoveTicker.start();
     const myTurn = this.state.game.current_turn === this.userId;
     const banner = this.root.querySelector("[data-turn-banner]");
     this.root.querySelector("[data-battle-actions]").hidden = completed;
@@ -488,6 +493,7 @@ class MultiplayerController {
 
   fail(error) {
     console.error(error);
+    this.opponentMoveTicker.stop();
     this.setConnection("error", "Error");
     this.showView("error");
     this.root.querySelector("[data-error-copy]").textContent = humanError(error);

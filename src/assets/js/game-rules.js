@@ -14,13 +14,6 @@ export function fleetCells(ships) {
   return ships.flatMap((ship, shipIndex) => cellsForShip(ship).map((cell) => ({ ...cell, shipIndex })));
 }
 
-export function shipHitCount(occupied, shots, shipIndex) {
-  return occupied
-    .filter((cell) => cell.shipIndex === shipIndex)
-    .filter((target) => shots.some((shot) => shot.row === target.row && shot.col === target.col))
-    .length;
-}
-
 export function anonymisedShipProgress(length, hits) {
   const visibleHits = Math.max(0, Math.min(length, hits));
   return Array.from({ length }, (_, index) => index < visibleHits);
