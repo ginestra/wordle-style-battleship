@@ -1,7 +1,7 @@
 import { copyText, showToast } from "./ui.js";
 import { renderFleetProgress } from "./fleet-progress.js";
 import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
-import { parseInvitationHash } from "./invitation.js";
+import { clearHostInvitation, loadHostInvitation, parseInvitationHash, saveHostInvitation } from "./invitation.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
 import { multiplayerResult } from "./multiplayer-result.js";
 import { shouldRefreshGame } from "./realtime-state.js";
@@ -19,6 +19,7 @@ class MultiplayerController {
     this.api = new MultiplayerApi();
     this.mode = "quick";
     this.gameId = null;
+    this.inviteUrl = null;
     this.userId = null;
     this.state = null;
     this.channel = null;
@@ -82,7 +83,9 @@ class MultiplayerController {
       });
     });
     this.root.querySelector("[data-create-game]").addEventListener("click", () => this.createGame());
-    this.root.querySelector("[data-copy-link]").addEventListener("click", () => copyText(this.root.querySelector("[data-share-url]").value, "Invitation copied"));
+    this.root.querySelectorAll("[data-copy-invitation]").forEach((button) => button.addEventListener("click", () => {
+      if (this.inviteUrl) copyText(this.inviteUrl, "Invitation copied");
+    }));
     this.root.querySelector("[data-rotate]").addEventListener("click", () => { this.orientation = this.orientation === "h" ? "v" : "h"; showToast(`Ships place ${this.orientation === "h" ? "horizontally" : "vertically"}`); });
     this.root.querySelector("[data-randomize]").addEventListener("click", () => { this.fleet = randomFleet(this.state.game.mode); this.selectedShip = -1; this.renderPlacement(); });
     this.root.querySelector("[data-clear-fleet]").addEventListener("click", () => { this.resetFleet(); this.renderPlacement(); });
@@ -114,6 +117,9 @@ class MultiplayerController {
       this.gameId = created.game_id;
       const hostUrl = `${location.pathname}#game=${encodeURIComponent(this.gameId)}`;
       const inviteUrl = `${location.origin}${location.pathname}#game=${encodeURIComponent(this.gameId)}&join=${encodeURIComponent(created.join_token)}`;
+      const provisionalExpiry = new Date(Date.now() + 86400000).toISOString();
+      this.inviteUrl = inviteUrl;
+      saveHostInvitation(localStorage, { gameId: this.gameId, url: inviteUrl, expiresAt: provisionalExpiry });
       window.history.replaceState(null, "", hostUrl);
       this.root.querySelector("[data-room-code]").textContent = created.room_code;
       this.root.querySelector("[data-share-url]").value = inviteUrl;
@@ -159,6 +165,7 @@ class MultiplayerController {
   render() {
     const { game, players } = this.state;
     const isHost = players.some((player) => player.user_id === this.userId && player.seat === 1);
+    this.syncInvitation(game, isHost);
     this.root.querySelector("[data-game-title]").textContent = isHost
       ? `${game.host_name} · Room ${game.room_code}`
       : `${game.host_name} invited you to Room ${game.room_code}`;
@@ -193,6 +200,26 @@ class MultiplayerController {
       this.renderBattle();
       void this.stopRealtime();
     }
+  }
+
+  syncInvitation(game, isHost) {
+    const resend = this.root.querySelector("[data-invite-resend]");
+    const expired = Date.parse(game.expires_at) <= Date.now();
+    if (!isHost || game.status === "completed" || expired) {
+      resend.hidden = true;
+      if (isHost && (game.status === "completed" || expired)) {
+        clearHostInvitation(localStorage, game.id);
+        this.inviteUrl = null;
+      }
+      return;
+    }
+
+    if (!this.inviteUrl) this.inviteUrl = loadHostInvitation(localStorage, game.id);
+    if (this.inviteUrl) {
+      saveHostInvitation(localStorage, { gameId: game.id, url: this.inviteUrl, expiresAt: game.expires_at });
+      this.root.querySelector("[data-share-url]").value = this.inviteUrl;
+    }
+    resend.hidden = !this.inviteUrl || game.status === "waiting";
   }
 
   async stopRealtime() {

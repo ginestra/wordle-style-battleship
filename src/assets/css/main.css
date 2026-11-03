@@ -196,6 +196,8 @@ a { color: inherit; }
 .connection-pill.is-error i { background: var(--danger); }
 .game-status { display: grid; gap: .35rem; margin: 2.5rem 0; padding: 1.2rem 1.4rem; border-left: 4px solid var(--player); background: var(--surface); }
 .game-status span { color: var(--muted); line-height: 1.45; }
+.invite-resend { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: -1.25rem 0 2.5rem; padding: .75rem 1rem; border: 1px solid var(--line); color: var(--muted); font-size: .78rem; }
+.invite-resend .button { flex: none; }
 
 .choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
 .name-field { display: grid; gap: .55rem; max-width: 520px; margin-bottom: 1.25rem; }
@@ -354,6 +356,7 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
   .fleet-table > div span:last-child { grid-column: 2; }
   .share-field__input { grid-template-columns: 1fr; }
   .share-field input { border-right: 1px solid var(--line); border-bottom: 0; }
+  .invite-resend { align-items: stretch; flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {

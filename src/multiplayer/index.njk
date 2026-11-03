@@ -18,6 +18,11 @@ pageId: multiplayer
     <span>Create a private match, then send the link to a friend.</span>
   </div>
 
+  <div class="invite-resend" data-invite-resend hidden>
+    <span>Need to send the invitation again?</span>
+    <button class="button button--quiet" type="button" data-copy-invitation>Copy invitation</button>
+  </div>
+
   <section class="lobby-panel" data-view="lobby">
     <label class="name-field">
       <span>Your name</span>
@@ -47,7 +52,7 @@ pageId: multiplayer
     </div>
     <label class="share-field">
       <span>Private invitation</span>
-      <span class="share-field__input"><input data-share-url readonly><button type="button" data-copy-link>Copy link</button></span>
+      <span class="share-field__input"><input data-share-url readonly><button type="button" data-copy-invitation>Copy link</button></span>
     </label>
     <div class="waiting-animation" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
     <p>Waiting for player two to open the link…</p>
