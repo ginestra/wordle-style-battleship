@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    .background { fill: #f4f3ef; }
+    .ship { fill: #496f83; }
+    .flag { fill: #e5533d; }
+    @media (prefers-color-scheme: dark) {
+      .background { fill: #161715; }
+      .ship { fill: #8eb5c8; }
+      .flag { fill: #f06450; }
+    }
+  </style>
+  <rect class="background" x="2" y="2" width="60" height="60" rx="8"/>
+  <path class="ship" d="M8 37h48l-7 14a6 6 0 0 1-5.4 3.3H20.4A6 6 0 0 1 15 51L8 37Z"/>
+  <path class="ship" d="M18 37v-9h10v-9h12v9h7v9H18Z"/>
+  <path class="ship" d="M30 9h4v10h-4z"/>
+  <path class="flag" d="M34 9h12l-3.5 4 3.5 4H34V9Z"/>
+</svg>
