@@ -1,5 +1,5 @@
 import { copyText, showToast } from "./ui.js";
-import { renderAttackProgress } from "./fleet-progress.js";
+import { opponentHitCount, renderGameProgress } from "./fleet-progress.js";
 import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
 import { clearHostInvitation, loadHostInvitation, parseInvitationHash, saveHostInvitation } from "./invitation.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
@@ -374,11 +374,12 @@ class MultiplayerController {
       cell.setAttribute("aria-label", `${coordinate(shot.row, shot.col)}, ${shot.result}`);
       if (!own) cell.disabled = true;
     }
-    renderAttackProgress(
-      this.root.querySelector("[data-opponent-fleet-progress]"),
-      config.fleet,
-      this.state.shots
-    );
+    renderGameProgress(this.root.querySelector("[data-opponent-fleet-progress]"), {
+      lengths: config.fleet,
+      hits: opponentHitCount(this.state.shots),
+      sunkLengths: this.state.sunk_opponent_ship_lengths || [],
+      label: "Opponent fleet"
+    });
     syncBoardTabStops(this.targetCells);
 
     const resultPanel = this.root.querySelector("[data-result-panel]");

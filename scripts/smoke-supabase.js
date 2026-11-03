@@ -53,6 +53,7 @@ try {
   assert.ok(Date.parse(hostState.game.updated_at));
   assert.equal(hostState.last_opponent_move_at, null);
   assert.deepEqual(hostState.opponent_fleet, []);
+  assert.deepEqual(hostState.sunk_opponent_ship_lengths, []);
 
   await call(guest, "submit_fleet", { p_game_id: created.game_id, p_ships: guestFleet });
   hostState = await getState(host, created.game_id);
@@ -111,6 +112,7 @@ try {
   assert.equal(hostState.game.status, "completed");
   assert.equal(hostState.game.winner_id, hostAuth.data.user.id);
   assert.deepEqual(hostState.opponent_fleet, guestFleet);
+  assert.deepEqual(hostState.sunk_opponent_ship_lengths, [3, 2, 2]);
   assert.deepEqual(guestState.opponent_fleet, hostFleet);
   const completedStateBytes = Buffer.byteLength(JSON.stringify(hostState));
   assert.ok(

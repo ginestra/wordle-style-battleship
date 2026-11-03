@@ -1,5 +1,5 @@
 import { copyText, showToast } from "./ui.js";
-import { renderFleetProgress } from "./fleet-progress.js";
+import { renderGameProgress } from "./fleet-progress.js";
 import { GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom, syncBoardTabStops } from "./game-rules.js";
 
 const root = document.querySelector("[data-daily-root]");
@@ -70,7 +70,12 @@ function initialiseDaily() {
   }
 
   function renderFleet() {
-    renderFleetProgress(root.querySelector("[data-daily-fleet]"), fleet, shots);
+    renderGameProgress(root.querySelector("[data-daily-fleet]"), {
+      lengths: fleet.map((ship) => ship.length),
+      hits: shots.filter((shot) => shot.shipIndex !== null).length,
+      sunkLengths: fleet.filter((_, index) => isShipSunk(index)).map((ship) => ship.length),
+      label: "Daily fleet"
+    });
   }
 
   function shareText() {
