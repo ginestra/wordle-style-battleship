@@ -34,3 +34,39 @@ export function renderFleetProgress(list, ships, shots) {
     list.append(row);
   });
 }
+
+export function attackProgress(lengths, shots) {
+  const total = lengths.reduce((sum, length) => sum + length, 0);
+  const hits = Math.min(total, shots.filter((shot) => shot.by_me && ["hit", "sunk"].includes(shot.result)).length);
+  let remaining = hits;
+  const rows = lengths.map((length) => {
+    const rowHits = Math.min(length, remaining);
+    remaining -= rowHits;
+    return { length, markers: anonymisedShipProgress(length, rowHits) };
+  });
+  return { hits, total, rows };
+}
+
+export function renderAttackProgress(list, lengths, shots) {
+  const progress = attackProgress(lengths, shots);
+  list.replaceChildren();
+  list.setAttribute("role", "img");
+  list.setAttribute("aria-label", `${progress.hits} of ${progress.total} opposing fleet sections hit`);
+
+  const total = document.createElement("strong");
+  total.className = "attack-progress-total";
+  total.textContent = `${progress.hits}/${progress.total} hits`;
+  list.append(total);
+
+  progress.rows.forEach(({ markers }) => {
+    const visual = document.createElement("div");
+    visual.className = "fleet-progress-ship attack-progress-row";
+    visual.setAttribute("aria-hidden", "true");
+    markers.forEach((hit) => {
+      const block = document.createElement("i");
+      if (hit) block.className = "is-hit";
+      visual.append(block);
+    });
+    list.append(visual);
+  });
+}

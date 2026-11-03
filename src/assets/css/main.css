@@ -270,8 +270,10 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .fleet-progress-ship i { width: 18px; aspect-ratio: 1; background: var(--water); }
 .fleet-progress-ship i.is-hit { background: var(--hit); }
 .fleet-progress-ship i.is-sunk { background: var(--sunk); box-shadow: inset 0 0 0 2px var(--surface); }
-.own-fleet-progress { margin-top: 1.5rem; }
-.own-fleet-progress h3 { margin: 0 0 .35rem; font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; }
+.attack-progress { margin-top: 1.5rem; }
+.attack-progress h3 { margin: 0 0 .35rem; font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; }
+.attack-progress-total { display: block; margin-bottom: .55rem; color: var(--muted); font: .68rem ui-monospace, monospace; text-transform: uppercase; }
+.attack-progress-row { margin-top: 4px; padding: 0; }
 
 .turn-banner { margin-bottom: 2rem; padding: 1rem; border: 1px solid var(--line-strong); font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: .1em; }
 .turn-banner.is-your-turn { background: var(--player); color: var(--on-player); border-color: var(--player); }

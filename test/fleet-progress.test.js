@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fleetProgress } from "../src/assets/js/fleet-progress.js";
+import { attackProgress, fleetProgress } from "../src/assets/js/fleet-progress.js";
 
 test("fleet progress counts incoming hits per ship without exposing positions", () => {
   const ships = [
@@ -18,4 +18,23 @@ test("fleet progress counts incoming hits per ship without exposing positions", 
     { length: 3, hits: 1, sunk: false, markers: [true, false, false] },
     { length: 2, hits: 2, sunk: true, markers: [true, true] }
   ]);
+});
+
+test("attack progress counts successful outgoing shots without assigning them to real ships", () => {
+  const shots = [
+    { by_me: true, result: "hit" },
+    { by_me: true, result: "miss" },
+    { by_me: true, result: "sunk" },
+    { by_me: true, result: "hit" },
+    { by_me: false, result: "hit" }
+  ];
+
+  assert.deepEqual(attackProgress([3, 2], shots), {
+    hits: 3,
+    total: 5,
+    rows: [
+      { length: 3, markers: [true, true, true] },
+      { length: 2, markers: [false, false] }
+    ]
+  });
 });
