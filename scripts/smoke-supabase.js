@@ -34,6 +34,12 @@ const guestFleet = [
   { length: 2, row: 0, col: 4, orientation: "v" }
 ];
 
+const touchingFleet = [
+  { length: 3, row: 0, col: 0, orientation: "h" },
+  { length: 2, row: 1, col: 3, orientation: "v" },
+  { length: 2, row: 4, col: 0, orientation: "h" }
+];
+
 try {
   const hostAuth = await host.auth.signInAnonymously();
   const guestAuth = await guest.auth.signInAnonymously();
@@ -45,6 +51,12 @@ try {
 
   const forbiddenFleetRead = await host.from("fleets").select("ships");
   assert.ok(forbiddenFleetRead.error, "hidden fleets must not be directly readable");
+
+  await assert.rejects(
+    call(host, "submit_fleet", { p_game_id: created.game_id, p_ships: touchingFleet }),
+    (error) => error?.message === "invalid fleet",
+    "touching ships must be rejected by the server"
+  );
 
   await call(host, "submit_fleet", { p_game_id: created.game_id, p_ships: hostFleet });
   let hostState = await getState(host, created.game_id);

@@ -304,7 +304,7 @@ class MultiplayerController {
     if (index < 0) return;
     const candidate = { ...this.fleet[index], row, col, orientation: this.orientation };
     if (!canPlaceShip(candidate, this.fleet, config.size, index)) {
-      showToast("That ship does not fit there");
+      showToast("Ships cannot overlap, touch, or leave the board");
       return;
     }
     this.fleet[index] = candidate;

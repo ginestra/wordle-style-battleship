@@ -11,11 +11,13 @@ test("horizontal and vertical ships occupy the expected cells", () => {
   ]);
 });
 
-test("placement rejects overlap and board overflow", () => {
+test("placement rejects overlap, touching ships, and board overflow", () => {
   const ships = [{ length: 3, row: 0, col: 0, orientation: "h" }];
   assert.equal(canPlaceShip({ length: 2, row: 0, col: 2, orientation: "v" }, ships, 7), false);
+  assert.equal(canPlaceShip({ length: 2, row: 1, col: 3, orientation: "v" }, ships, 7), false);
+  assert.equal(canPlaceShip({ length: 2, row: 1, col: 1, orientation: "h" }, ships, 7), false);
   assert.equal(canPlaceShip({ length: 2, row: 6, col: 6, orientation: "h" }, ships, 7), false);
-  assert.equal(canPlaceShip({ length: 2, row: 4, col: 4, orientation: "h" }, ships, 7), true);
+  assert.equal(canPlaceShip({ length: 2, row: 2, col: 0, orientation: "h" }, ships, 7), true);
 });
 
 test("random fleets are deterministic and valid", () => {

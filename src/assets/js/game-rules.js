@@ -30,11 +30,10 @@ export function canPlaceShip(ship, ships, boardSize, ignoreIndex = -1) {
   const candidate = cellsForShip(ship);
   if (candidate.some(({ row, col }) => row < 0 || col < 0 || row >= boardSize || col >= boardSize)) return false;
 
-  const occupied = new Set(
-    ships.flatMap((other, index) => index === ignoreIndex ? [] : cellsForShip(other))
-      .map(({ row, col }) => `${row}:${col}`)
-  );
-  return candidate.every(({ row, col }) => !occupied.has(`${row}:${col}`));
+  const occupied = ships.flatMap((other, index) => index === ignoreIndex ? [] : cellsForShip(other));
+  return candidate.every(({ row, col }) => occupied.every((cell) => (
+    Math.abs(cell.row - row) > 1 || Math.abs(cell.col - col) > 1
+  )));
 }
 
 export function validateFleet(mode, ships) {
