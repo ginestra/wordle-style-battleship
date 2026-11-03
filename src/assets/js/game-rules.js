@@ -14,6 +14,12 @@ export function fleetCells(ships) {
   return ships.flatMap((ship, shipIndex) => cellsForShip(ship).map((cell) => ({ ...cell, shipIndex })));
 }
 
+export function shipHitProgress(occupied, shots, shipIndex) {
+  return occupied
+    .filter((cell) => cell.shipIndex === shipIndex)
+    .map((target) => shots.some((shot) => shot.row === target.row && shot.col === target.col));
+}
+
 export function canPlaceShip(ship, ships, boardSize, ignoreIndex = -1) {
   const candidate = cellsForShip(ship);
   if (candidate.some(({ row, col }) => row < 0 || col < 0 || row >= boardSize || col >= boardSize)) return false;

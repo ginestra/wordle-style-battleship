@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { GAME_MODES, canPlaceShip, cellsForShip, dailySeed, randomFleet, seededRandom, validateFleet } from "../src/assets/js/game-rules.js";
+import { GAME_MODES, canPlaceShip, cellsForShip, dailySeed, randomFleet, seededRandom, shipHitProgress, validateFleet } from "../src/assets/js/game-rules.js";
 
 test("horizontal and vertical ships occupy the expected cells", () => {
   assert.deepEqual(cellsForShip({ length: 3, row: 1, col: 2, orientation: "h" }), [
@@ -29,4 +29,15 @@ test("random fleets are deterministic and valid", () => {
 
 test("daily seed uses a UTC calendar date", () => {
   assert.equal(dailySeed(new Date("2026-10-30T23:59:59Z")), "2026-10-30");
+});
+
+test("ship progress marks only sections that have been hit", () => {
+  const occupied = [
+    { row: 1, col: 1, shipIndex: 0 },
+    { row: 1, col: 2, shipIndex: 0 },
+    { row: 3, col: 3, shipIndex: 1 }
+  ];
+  const shots = [{ row: 1, col: 2 }, { row: 3, col: 3 }, { row: 6, col: 6 }];
+  assert.deepEqual(shipHitProgress(occupied, shots, 0), [false, true]);
+  assert.deepEqual(shipHitProgress(occupied, shots, 1), [true]);
 });

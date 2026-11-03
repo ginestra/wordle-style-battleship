@@ -1,5 +1,5 @@
 import { copyText, showToast } from "./ui.js";
-import { GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom, syncBoardTabStops } from "./game-rules.js";
+import { GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom, shipHitProgress, syncBoardTabStops } from "./game-rules.js";
 
 const root = document.querySelector("[data-daily-root]");
 if (root) initialiseDaily();
@@ -18,7 +18,6 @@ function initialiseDaily() {
 
   root.querySelector("[data-daily-number]").textContent = puzzleNumber(today);
   root.querySelector("[data-daily-date]").textContent = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${today}T12:00:00Z`));
-  renderFleet();
   render();
 
   function fire(row, col) {
@@ -73,10 +72,24 @@ function initialiseDaily() {
     const list = root.querySelector("[data-daily-fleet]");
     list.replaceChildren();
     fleet.forEach((ship, index) => {
+      const progress = shipHitProgress(occupied, shots, index);
+      const hits = progress.filter(Boolean).length;
+      const sunk = isShipSunk(index);
       const row = document.createElement("div");
-      row.className = `fleet-item${isShipSunk(index) ? " is-placed" : ""}`;
-      const blocks = Array.from({ length: ship.length }, () => "<i></i>").join("");
-      row.innerHTML = `<button type="button" tabindex="-1" aria-label="Ship length ${ship.length}${isShipSunk(index) ? ", sunk" : ""}">${blocks}</button><span>${isShipSunk(index) ? "Sunk" : "Afloat"}</span>`;
+      row.className = `fleet-item daily-fleet-item${sunk ? " is-sunk" : ""}`;
+      const visual = document.createElement("div");
+      visual.className = "daily-fleet-ship";
+      visual.setAttribute("role", "img");
+      visual.setAttribute("aria-label", `Ship length ${ship.length}, ${sunk ? "sunk" : `${hits} of ${ship.length} sections hit`}`);
+      progress.forEach((hit) => {
+        const block = document.createElement("i");
+        if (sunk) block.className = "is-sunk";
+        else if (hit) block.className = "is-hit";
+        visual.append(block);
+      });
+      const status = document.createElement("span");
+      status.textContent = sunk ? "Sunk" : hits ? `${hits}/${ship.length} hit` : "Afloat";
+      row.append(visual, status);
       list.append(row);
     });
   }

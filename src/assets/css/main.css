@@ -201,6 +201,10 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .fleet-item.is-selected button i, .fleet-item.is-placed button i { background: var(--player); }
 .fleet-item.is-placed { color: var(--muted); }
 .fleet-item span { font: .72rem ui-monospace, monospace; color: var(--muted); text-transform: uppercase; }
+.daily-fleet-ship { display: flex; gap: 4px; align-items: center; padding: .35rem; }
+.daily-fleet-ship i { width: 18px; aspect-ratio: 1; background: var(--water); }
+.daily-fleet-ship i.is-hit { background: var(--hit); }
+.daily-fleet-ship i.is-sunk { background: var(--sunk); box-shadow: inset 0 0 0 2px var(--surface); }
 
 .turn-banner { margin-bottom: 2rem; padding: 1rem; border: 1px solid var(--line-strong); font-weight: 800; text-align: center; text-transform: uppercase; letter-spacing: .1em; }
 .turn-banner.is-your-turn { background: var(--player); color: var(--on-player); border-color: var(--player); }
@@ -236,12 +240,15 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
   .site-header { grid-template-columns: 1fr auto; }
   .site-header nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; padding: .9rem 0; border-top: 1px solid var(--line); }
   .site-main { padding-top: 3.5rem; }
-  .mode-grid, .choice-grid, .rules-grid, .placement-layout, .daily-layout { grid-template-columns: 1fr; }
+  .mode-grid, .choice-grid, .rules-grid, .placement-layout { grid-template-columns: 1fr; }
   .mode-card { min-height: 175px; }
   .rule-block { border-right: 0; border-bottom: 1px solid var(--line); }
   .game-heading { align-items: start; flex-direction: column; }
   .connection-pill { align-self: flex-start; }
-  .fleet-controls, .daily-sidebar { order: -1; }
+  .fleet-controls { order: -1; }
+  .daily-layout { grid-template-columns: minmax(0, 1fr) minmax(88px, 28vw); gap: clamp(.75rem, 3vw, 1.25rem); }
+  .daily-layout > * { min-width: 0; }
+  .daily-fleet-ship i { width: clamp(9px, 2.5vw, 14px); }
   .battle-layout { grid-template-columns: minmax(0, 1fr) minmax(88px, 28vw); gap: clamp(.75rem, 3vw, 1.25rem); align-items: start; }
   .battle-layout > section { min-width: 0; }
   .battle-layout .board-wrap--small { max-width: 100%; }
@@ -250,10 +257,26 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 
 @media (max-width: 960px) and (orientation: landscape) {
   .site-main { padding-top: 2rem; }
+  .daily-layout { grid-template-columns: minmax(0, 1fr) minmax(130px, .44fr); gap: clamp(1rem, 4vw, 2.5rem); }
+  .daily-layout > .board-wrap { max-width: min(62vw, 65vh); }
+  .daily-fleet-ship i { width: 12px; }
   .battle-layout { grid-template-columns: minmax(0, 1fr) minmax(130px, .44fr); gap: clamp(1rem, 4vw, 2.5rem); align-items: start; }
   .battle-layout > section { min-width: 0; }
   .battle-layout > section:first-child .board-wrap { max-width: min(62vw, 65vh); }
   .battle-layout .board-wrap--small { max-width: min(30vw, 44vh); }
+}
+
+@media (max-width: 760px), (max-width: 960px) and (orientation: landscape) {
+  .daily-sidebar .stat-pair { margin-bottom: .75rem; }
+  .daily-sidebar .stat-pair div { padding: .45rem .25rem; }
+  .daily-sidebar .stat-pair strong { font-size: 1rem; }
+  .daily-sidebar .stat-pair span { font-size: .58rem; letter-spacing: .05em; }
+  .daily-sidebar h2 { margin-bottom: .35rem; font-size: .64rem; letter-spacing: .06em; }
+  .daily-fleet-item { grid-template-columns: 1fr; gap: .15rem; padding: .45rem 0; }
+  .daily-fleet-ship { gap: 2px; padding: 0; }
+  .daily-fleet-item span { font-size: .58rem; }
+  .daily-sidebar > .button { min-height: 40px; padding: .55rem .4rem; font-size: .7rem; }
+  .daily-sidebar .fine-print { font-size: .65rem; }
 }
 
 @media (max-width: 440px) {
