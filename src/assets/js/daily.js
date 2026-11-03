@@ -1,5 +1,6 @@
 import { copyText, showToast } from "./ui.js";
-import { anonymisedShipProgress, GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom, shipHitCount, syncBoardTabStops } from "./game-rules.js";
+import { renderFleetProgress } from "./fleet-progress.js";
+import { GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom, syncBoardTabStops } from "./game-rules.js";
 
 const root = document.querySelector("[data-daily-root]");
 if (root) initialiseDaily();
@@ -69,29 +70,7 @@ function initialiseDaily() {
   }
 
   function renderFleet() {
-    const list = root.querySelector("[data-daily-fleet]");
-    list.replaceChildren();
-    fleet.forEach((ship, index) => {
-      const hits = shipHitCount(occupied, shots, index);
-      const progress = anonymisedShipProgress(ship.length, hits);
-      const sunk = isShipSunk(index);
-      const row = document.createElement("div");
-      row.className = `fleet-item daily-fleet-item${sunk ? " is-sunk" : ""}`;
-      const visual = document.createElement("div");
-      visual.className = "daily-fleet-ship";
-      visual.setAttribute("role", "img");
-      visual.setAttribute("aria-label", `Ship length ${ship.length}, ${sunk ? "sunk" : `${hits} of ${ship.length} sections hit`}`);
-      progress.forEach((hit) => {
-        const block = document.createElement("i");
-        if (sunk) block.className = "is-sunk";
-        else if (hit) block.className = "is-hit";
-        visual.append(block);
-      });
-      const status = document.createElement("span");
-      status.textContent = sunk ? "Sunk" : hits ? `${hits}/${ship.length} hit` : "Afloat";
-      row.append(visual, status);
-      list.append(row);
-    });
+    renderFleetProgress(root.querySelector("[data-daily-fleet]"), fleet, shots);
   }
 
   function shareText() {
