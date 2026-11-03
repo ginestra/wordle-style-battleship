@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="system">
+<html lang="en" data-theme="system" data-style="minimal">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,9 +23,15 @@
         <a href="/multiplayer/">Two players</a>
         <a href="/rules/">Rules</a>
       </nav>
-      <button class="icon-button" type="button" data-theme-toggle aria-label="Change colour theme">
-        <span data-theme-icon aria-hidden="true">◐</span>
-      </button>
+      <div class="appearance-controls">
+        <button class="icon-button style-button" type="button" data-style-toggle aria-label="Visual style: minimal. Click to change." title="Visual style: minimal">
+          <span data-style-icon aria-hidden="true">◇</span>
+          <span data-style-label>Minimal</span>
+        </button>
+        <button class="icon-button" type="button" data-theme-toggle aria-label="Change colour theme" title="Colour theme: system">
+          <span data-theme-icon aria-hidden="true">◐</span>
+        </button>
+      </div>
     </header>
 
     <main id="main" class="site-main">
