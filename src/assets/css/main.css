@@ -171,7 +171,7 @@ a { color: inherit; }
 .cell-swatch--ship { background: var(--player); }
 .cell-swatch--miss { background: var(--miss); }
 .cell-swatch--hit { background: var(--hit); }
-.cell-swatch--sunk { background: var(--sunk); box-shadow: inset 0 0 0 2px var(--surface); }
+.cell-swatch--sunk { background: var(--sunk); }
 
 .page-heading { max-width: 800px; }
 .page-heading h1 { font-size: clamp(2.5rem, 7vw, 5.5rem); }
@@ -254,7 +254,7 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .board-cell.is-hit { background: var(--hit); }
 .board-cell.is-hit::before, .board-cell.is-hit::after { content: ""; position: absolute; left: 18%; right: 18%; top: 47%; height: 2px; background: var(--surface); transform: rotate(45deg); }
 .board-cell.is-hit::after { transform: rotate(-45deg); }
-.board-cell.is-sunk { background: var(--sunk); box-shadow: inset 0 0 0 3px var(--surface); }
+.board-cell.is-sunk { background: var(--sunk); }
 .board-cell.is-sunk::after { content: "×"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--surface); font-size: clamp(.7rem, 2.3vw, 1.3rem); font-weight: 800; }
 .fleet-controls h2, .daily-sidebar h2, .battle-layout h2 { margin: 0 0 1rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .12em; }
 .fleet-controls > .button--primary { width: 100%; margin-top: 1.5rem; }
@@ -268,7 +268,7 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .fleet-item span { font: .72rem ui-monospace, monospace; color: var(--muted); text-transform: uppercase; }
 .fleet-progress-ship { display: flex; gap: 4px; align-items: center; padding: .35rem; }
 .fleet-progress-ship i { width: 18px; aspect-ratio: 1; background: var(--water); }
-.fleet-progress-ship i.is-sunk { background: var(--hit); box-shadow: inset 0 0 0 2px var(--surface); }
+.fleet-progress-ship i.is-sunk { background: var(--hit); }
 .attack-progress { margin-top: 1.5rem; }
 .attack-progress h3 { margin: 0 0 .35rem; font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; }
 .game-progress-total { display: block; margin-bottom: .45rem; color: var(--muted); font: .68rem ui-monospace, monospace; text-transform: uppercase; }
