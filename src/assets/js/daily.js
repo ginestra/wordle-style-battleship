@@ -1,5 +1,5 @@
 import { copyText, showToast } from "./ui.js";
-import { GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom, shipHitProgress, syncBoardTabStops } from "./game-rules.js";
+import { anonymisedShipProgress, GAME_MODES, cellAt, coordinate, createBoard, dailySeed, fleetCells, randomFleet, seededRandom, shipHitCount, syncBoardTabStops } from "./game-rules.js";
 
 const root = document.querySelector("[data-daily-root]");
 if (root) initialiseDaily();
@@ -72,8 +72,8 @@ function initialiseDaily() {
     const list = root.querySelector("[data-daily-fleet]");
     list.replaceChildren();
     fleet.forEach((ship, index) => {
-      const progress = shipHitProgress(occupied, shots, index);
-      const hits = progress.filter(Boolean).length;
+      const hits = shipHitCount(occupied, shots, index);
+      const progress = anonymisedShipProgress(ship.length, hits);
       const sunk = isShipSunk(index);
       const row = document.createElement("div");
       row.className = `fleet-item daily-fleet-item${sunk ? " is-sunk" : ""}`;
