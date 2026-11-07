@@ -7,30 +7,80 @@ pageId: rules
 <header class="page-heading">
   <p class="eyebrow">How to play</p>
   <h1>Rules of the water</h1>
-  <p>Place every ship, then take turns choosing one untouched square on your opponent’s grid.</p>
+  <p>Hide your fleet, take one shot per turn, and sink every square occupied by your opponent’s ships.</p>
 </header>
 
 <div class="rules-grid">
   <section class="rule-block">
     <span class="rule-number">01</span>
     <h2>Place</h2>
-    <p>Ships may be horizontal or vertical. They may touch, but they cannot overlap or leave the board.</p>
+    <p>Ships may be horizontal or vertical. They cannot overlap, touch—even diagonally—or leave the board.</p>
   </section>
   <section class="rule-block">
     <span class="rule-number">02</span>
     <h2>Fire</h2>
-    <p>Each player takes exactly one shot per turn. A miss, hit, or sunk ship passes play to the other player.</p>
+    <p>Choose one untouched square in your opponent’s waters. Hit or miss, play then passes to them.</p>
   </section>
   <section class="rule-block">
     <span class="rule-number">03</span>
     <h2>Win</h2>
-    <p>The first player to hit every occupied square in the opposing fleet wins.</p>
+    <p>The first player to hit every occupied square in the opposing fleet wins. A resignation awards the win to the opponent.</p>
   </section>
 </div>
+
+<section class="rules-section" aria-labelledby="placement-title">
+  <p class="eyebrow">Two-player setup</p>
+  <h2 id="placement-title">Place your ships</h2>
+  <p class="rules-section__lede">Both players arrange and lock their own fleet before the first turn. Your opponent cannot see your positions.</p>
+  <ol class="placement-steps">
+    <li>
+      <span>01</span>
+      <div><strong>Drag to place</strong><p>Drag a ship from the fleet list onto any valid board square. Drag a placed ship again to move it.</p></div>
+    </li>
+    <li>
+      <span>02</span>
+      <div><strong>Tap to rotate</strong><p>Tap or click a placed ship once to rotate it. You can also select a ship and use the Rotate button.</p></div>
+    </li>
+    <li>
+      <span>03</span>
+      <div><strong>Return to the fleet</strong><p>Double-tap or double-click a placed ship, or drag it back onto the fleet list. Random and Clear remain available.</p></div>
+    </li>
+    <li>
+      <span>04</span>
+      <div><strong>Lock when ready</strong><p>Lock your fleet after every ship is placed. Positions cannot be changed after locking, and play starts only when both fleets are locked.</p></div>
+    </li>
+  </ol>
+  <p class="rules-note"><strong>Keyboard:</strong> select a ship, use the arrow keys to move around the board, and press Enter to place or interact with it.</p>
+</section>
+
+<section class="rules-section" aria-labelledby="match-title">
+  <p class="eyebrow">During a match</p>
+  <h2 id="match-title">Take turns</h2>
+  <div class="rules-details">
+    <article>
+      <h3>Read the board</h3>
+      <p>Misses become unavailable grey squares, hits turn red, and a fully sunk ship changes to the sunk colour. The turn banner and browser-tab title tell you when to play.</p>
+    </article>
+    <article>
+      <h3>Follow your progress</h3>
+      <p>The hit queue shows how many fleet squares you have found. The fleet list marks each fully sunk opposing ship in red without revealing unfinished ship positions.</p>
+    </article>
+    <article>
+      <h3>Finish the match</h3>
+      <p>You may resign at any time, immediately giving the win to your opponent. When a match ends, both final fleets and the complete boards remain visible.</p>
+    </article>
+  </div>
+</section>
 
 <section class="fleet-table" aria-labelledby="fleets-title">
   <h2 id="fleets-title">Fleet sizes</h2>
   <div><strong>Quick</strong><span>7 × 7 board</span><span>3, 2, 2</span></div>
   <div><strong>Standard</strong><span>10 × 10 board</span><span>5, 4, 3, 3, 2</span></div>
+</section>
+
+<section class="rules-section rules-section--daily" aria-labelledby="daily-title">
+  <p class="eyebrow">Daily waters</p>
+  <h2 id="daily-title">One fleet each day</h2>
+  <p class="rules-section__lede">Everyone receives the same standard 10 × 10 fleet for the UTC day. Choose untouched squares until all five ships are sunk, aim for as few shots as possible, then copy and share your result. Progress is saved in this browser until the next daily game.</p>
 </section>
 {% endblock %}
