@@ -1,6 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { draggedShipPosition, PlacementGestures } from "../src/assets/js/placement-gestures.js";
+import { draggedShipPosition, hasActiveKeyboardPlacement, PlacementGestures } from "../src/assets/js/placement-gestures.js";
+
+test("placed ships stay locked while an unplaced keyboard ship is active", () => {
+  const fleet = [
+    { row: 2, col: 2 },
+    { row: null, col: null }
+  ];
+  assert.equal(hasActiveKeyboardPlacement(fleet, 1), true);
+  fleet[1] = { row: 4, col: 4 };
+  assert.equal(hasActiveKeyboardPlacement(fleet, 1), false);
+  assert.equal(hasActiveKeyboardPlacement(fleet, null), false);
+});
 
 test("a horizontal drag keeps the grabbed ship section under the pointer", () => {
   assert.deepEqual(draggedShipPosition(4, 5, "h", 2), { row: 4, col: 3 });

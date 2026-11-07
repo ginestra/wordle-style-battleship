@@ -5,7 +5,7 @@ import { clearHostInvitation, loadHostInvitation, parseInvitationHash, saveHostI
 import { IntervalTicker } from "./interval-ticker.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
 import { multiplayerResult } from "./multiplayer-result.js";
-import { draggedShipPosition, PlacementGestures } from "./placement-gestures.js";
+import { draggedShipPosition, hasActiveKeyboardPlacement, PlacementGestures } from "./placement-gestures.js";
 import { shouldRefreshGame } from "./realtime-state.js";
 import { RefreshQueue } from "./refresh-queue.js";
 import { opponentMoveTime } from "./relative-time.js";
@@ -29,6 +29,7 @@ class MultiplayerController {
     this.refreshQueue = new RefreshQueue(() => this.fetchAndRender());
     this.fleet = [];
     this.selectedShip = 0;
+    this.keyboardPlacementShip = null;
     this.orientation = "h";
     this.isLockingFleet = false;
     this.wasMyTurn = false;
@@ -91,7 +92,7 @@ class MultiplayerController {
       if (this.inviteUrl) copyText(this.inviteUrl, "Invitation copied");
     }));
     this.root.querySelector("[data-rotate]").addEventListener("click", () => this.rotateSelectedShip());
-    this.root.querySelector("[data-randomize]").addEventListener("click", () => { this.cancelShipTap(); this.fleet = randomFleet(this.state.game.mode); this.selectedShip = -1; this.renderPlacement(); });
+    this.root.querySelector("[data-randomize]").addEventListener("click", () => { this.cancelShipTap(); this.keyboardPlacementShip = null; this.fleet = randomFleet(this.state.game.mode); this.selectedShip = -1; this.renderPlacement(); });
     this.root.querySelector("[data-clear-fleet]").addEventListener("click", () => { this.cancelShipTap(); this.resetFleet(); this.renderPlacement(); });
     this.root.querySelector("[data-ready]").addEventListener("click", () => this.lockFleet());
     this.root.querySelector("[data-resign-game]").addEventListener("click", () => this.showResignDialog());
@@ -274,6 +275,7 @@ class MultiplayerController {
   resetFleet() {
     this.fleet = GAME_MODES[this.state.game.mode].fleet.map((length) => ({ length, row: null, col: null, orientation: "h" }));
     this.selectedShip = 0;
+    this.keyboardPlacementShip = null;
   }
 
   renderPlacement() {
@@ -349,6 +351,7 @@ class MultiplayerController {
       return;
     }
     this.fleet[index] = candidate;
+    if (this.keyboardPlacementShip === index) this.keyboardPlacementShip = null;
     this.selectedShip = this.fleet.findIndex((ship) => ship.row === null);
     this.renderPlacement();
   }
@@ -365,6 +368,7 @@ class MultiplayerController {
   }
 
   handlePlacementCellKeyDown(row, col, key) {
+    if (hasActiveKeyboardPlacement(this.fleet, this.keyboardPlacementShip)) return false;
     const config = GAME_MODES[this.state.game.mode];
     const cell = cellAt(this.placementCells, config.size, row, col);
     const shipIndex = cell?.dataset.dragShip;
@@ -408,6 +412,7 @@ class MultiplayerController {
     this.selectedShip = index;
     this.orientation = ship.orientation || "h";
     if (fromKeyboard) {
+      this.keyboardPlacementShip = ship.row === null ? index : null;
       this.renderPlacement();
       const startingPosition = ship.row === null
         ? firstValidShipPlacement(ship, this.fleet, GAME_MODES[this.state.game.mode].size, index)
@@ -417,8 +422,11 @@ class MultiplayerController {
         : this.root.querySelector(`[data-placement-board] [data-drag-ship="${index}"][data-ship-offset="0"]`);
       if (ship.row === null && !startingPosition) showToast("No valid starting square for this ship");
       target?.focus();
-    } else if (ship.row === null) this.renderPlacement();
-    else this.queuePlacedShipTap(index);
+    } else {
+      this.keyboardPlacementShip = null;
+      if (ship.row === null) this.renderPlacement();
+      else this.queuePlacedShipTap(index);
+    }
   }
 
   queuePlacedShipTap(index) {
@@ -476,6 +484,7 @@ class MultiplayerController {
     const ship = this.fleet[index];
     if (!ship || ship.row === null) return;
     this.fleet[index] = { ...ship, row: null, col: null };
+    this.keyboardPlacementShip = null;
     this.selectedShip = index;
     this.orientation = ship.orientation;
     this.renderPlacement();
@@ -484,6 +493,7 @@ class MultiplayerController {
 
   startDraggingShip(index) {
     this.cancelShipTap();
+    this.keyboardPlacementShip = null;
     this.selectedShip = index;
     this.orientation = this.fleet[index].orientation || "h";
     this.root.querySelectorAll(`[data-placement-board] [data-drag-ship="${index}"]`).forEach((cell) => cell.classList.add("is-drag-source"));

@@ -1,5 +1,9 @@
 const dragThreshold = 6;
 
+export function hasActiveKeyboardPlacement(fleet, activeIndex) {
+  return Number.isInteger(activeIndex) && fleet[activeIndex]?.row === null;
+}
+
 export function draggedShipPosition(row, col, orientation, grabbedOffset) {
   return {
     row: row - (orientation === "v" ? grabbedOffset : 0),
