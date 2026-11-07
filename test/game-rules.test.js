@@ -21,6 +21,15 @@ test("placement rejects overlap, touching ships, and board overflow", () => {
   assert.equal(canPlaceShip({ length: 2, row: 2, col: 0, orientation: "h" }, ships, 7), true);
 });
 
+test("unplaced ships do not create a false exclusion zone at the top-left border", () => {
+  const unplaced = [
+    { length: 3, row: null, col: null, orientation: "h" },
+    { length: 2, row: null, col: null, orientation: "h" }
+  ];
+  assert.equal(canPlaceShip({ length: 2, row: 0, col: 0, orientation: "h" }, unplaced, 7), true);
+  assert.equal(canPlaceShip({ length: 2, row: 0, col: 0, orientation: "v" }, unplaced, 7), true);
+});
+
 test("random fleets are deterministic and valid", () => {
   for (const mode of Object.keys(GAME_MODES)) {
     const first = randomFleet(mode, seededRandom(`test:${mode}`));

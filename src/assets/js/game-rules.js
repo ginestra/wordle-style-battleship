@@ -23,7 +23,9 @@ export function canPlaceShip(ship, ships, boardSize, ignoreIndex = -1) {
   const candidate = cellsForShip(ship);
   if (candidate.some(({ row, col }) => row < 0 || col < 0 || row >= boardSize || col >= boardSize)) return false;
 
-  const occupied = ships.flatMap((other, index) => index === ignoreIndex ? [] : cellsForShip(other));
+  const occupied = ships.flatMap((other, index) => (
+    index === ignoreIndex || other.row === null || other.col === null ? [] : cellsForShip(other)
+  ));
   return candidate.every(({ row, col }) => occupied.every((cell) => (
     Math.abs(cell.row - row) > 1 || Math.abs(cell.col - col) > 1
   )));
