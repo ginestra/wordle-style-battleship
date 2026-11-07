@@ -10,7 +10,7 @@ test("a vertical drag keeps the grabbed ship section under the pointer", () => {
   assert.deepEqual(draggedShipPosition(5, 4, "v", 2), { row: 3, col: 4 });
 });
 
-function dragSetup() {
+function dragSetup(source = "list") {
   const element = (area, dataset = {}) => ({
     area,
     dataset,
@@ -27,7 +27,8 @@ function dragSetup() {
   });
   const board = element("board");
   const list = element("list");
-  const handle = element("list", { dragShip: "0", shipOffset: "1" });
+  const handle = element(source, { dragShip: "0", shipOffset: "1" });
+  const listTarget = element("list");
   const cell = element("board", { row: "4", col: "5" });
   let beneath = cell;
   const drops = [];
@@ -55,11 +56,19 @@ function dragSetup() {
   });
   const down = { pointerId: 1, pointerType: "mouse", button: 0, clientX: 0, clientY: 0, target: handle };
   const move = { pointerId: 1, clientX: 20, clientY: 20, preventDefault() {} };
-  return { gestures, down, move, drops, hoverList: () => { beneath = handle; } };
+  return { gestures, down, move, drops, hoverList: () => { beneath = listTarget; } };
 }
 
-test("dragging a grabbed section onto the board reports the intended drop", () => {
+test("a ship dragged from the fleet anchors its first section to the drop square", () => {
   const { gestures, down, move, drops } = dragSetup();
+  gestures.handlePointerDown(down);
+  gestures.handlePointerMove(move);
+  gestures.handlePointerEnd({ pointerId: 1, type: "pointerup" });
+  assert.deepEqual(drops, [["board", 0, 4, 5, 0]]);
+});
+
+test("a ship moved on the board preserves the grabbed section", () => {
+  const { gestures, down, move, drops } = dragSetup("board");
   gestures.handlePointerDown(down);
   gestures.handlePointerMove(move);
   gestures.handlePointerEnd({ pointerId: 1, type: "pointerup" });

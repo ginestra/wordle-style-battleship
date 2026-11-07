@@ -46,11 +46,12 @@ export class PlacementGestures {
     const shipIndex = Number(handle.dataset.dragShip);
     const ship = this.getShip(shipIndex);
     if (!ship) return;
+    const fromFleetList = this.list.contains(handle);
 
     this.pointer = {
       id: event.pointerId,
       shipIndex,
-      offset: Number(handle.dataset.shipOffset || 0),
+      offset: fromFleetList ? 0 : Number(handle.dataset.shipOffset || 0),
       startX: event.clientX,
       startY: event.clientY,
       dragging: false,
