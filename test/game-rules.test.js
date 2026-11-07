@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { anonymisedShipProgress, GAME_MODES, canPlaceShip, cellsForShip, dailySeed, randomFleet, seededRandom, validateFleet } from "../src/assets/js/game-rules.js";
+import { anonymisedShipProgress, GAME_MODES, canPlaceShip, cellsForShip, dailySeed, firstValidShipPlacement, randomFleet, seededRandom, validateFleet } from "../src/assets/js/game-rules.js";
 import { invalidQuickFleets, validQuickFleets } from "./fixtures/fleets.js";
 
 test("horizontal and vertical ships occupy the expected cells", () => {
@@ -28,6 +28,21 @@ test("unplaced ships do not create a false exclusion zone at the top-left border
   ];
   assert.equal(canPlaceShip({ length: 2, row: 0, col: 0, orientation: "h" }, unplaced, 7), true);
   assert.equal(canPlaceShip({ length: 2, row: 0, col: 0, orientation: "v" }, unplaced, 7), true);
+});
+
+test("the next keyboard ship starts at the first legal square", () => {
+  const ships = [
+    { length: 3, row: 0, col: 0, orientation: "h" },
+    { length: 2, row: null, col: null, orientation: "h" }
+  ];
+  assert.deepEqual(firstValidShipPlacement(ships[1], ships, 7, 1), {
+    length: 2, row: 0, col: 4, orientation: "h"
+  });
+});
+
+test("a keyboard ship has no starting square when none is legal", () => {
+  const ships = [{ length: 3, row: 1, col: 0, orientation: "h" }];
+  assert.equal(firstValidShipPlacement({ length: 2, row: null, col: null, orientation: "h" }, ships, 3), null);
 });
 
 test("random fleets are deterministic and valid", () => {

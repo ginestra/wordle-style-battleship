@@ -1,6 +1,6 @@
 import { copyText, showToast } from "./ui.js";
 import { opponentHitCount, renderGameProgress } from "./fleet-progress.js";
-import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
+import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, firstValidShipPlacement, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
 import { clearHostInvitation, loadHostInvitation, parseInvitationHash, saveHostInvitation } from "./invitation.js";
 import { IntervalTicker } from "./interval-ticker.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
@@ -358,7 +358,9 @@ class MultiplayerController {
     const config = GAME_MODES[this.state.game.mode];
     const cell = cellAt(this.placementCells, config.size, row, col);
     const shipIndex = cell?.dataset.dragShip;
-    if (shipIndex !== undefined) this.queuePlacedShipTap(Number(shipIndex));
+    const selectedShip = this.fleet[this.selectedShip];
+    if (selectedShip?.row === null) this.placeSelectedShip(row, col);
+    else if (shipIndex !== undefined) this.queuePlacedShipTap(Number(shipIndex));
     else this.placeSelectedShip(row, col);
   }
 
@@ -401,9 +403,13 @@ class MultiplayerController {
     this.orientation = ship.orientation || "h";
     if (fromKeyboard) {
       this.renderPlacement();
-      const target = ship.row === null
-        ? this.placementCells.find((cell) => cell.tabIndex === 0)
+      const startingPosition = ship.row === null
+        ? firstValidShipPlacement(ship, this.fleet, GAME_MODES[this.state.game.mode].size, index)
+        : null;
+      const target = startingPosition
+        ? cellAt(this.placementCells, GAME_MODES[this.state.game.mode].size, startingPosition.row, startingPosition.col)
         : this.root.querySelector(`[data-placement-board] [data-drag-ship="${index}"][data-ship-offset="0"]`);
+      if (ship.row === null && !startingPosition) showToast("No valid starting square for this ship");
       target?.focus();
     } else if (ship.row === null) this.renderPlacement();
     else this.queuePlacedShipTap(index);

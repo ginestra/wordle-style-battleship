@@ -31,6 +31,16 @@ export function canPlaceShip(ship, ships, boardSize, ignoreIndex = -1) {
   )));
 }
 
+export function firstValidShipPlacement(ship, ships, boardSize, ignoreIndex = -1) {
+  for (let row = 0; row < boardSize; row += 1) {
+    for (let col = 0; col < boardSize; col += 1) {
+      const candidate = { ...ship, row, col };
+      if (canPlaceShip(candidate, ships, boardSize, ignoreIndex)) return candidate;
+    }
+  }
+  return null;
+}
+
 export function validateFleet(mode, ships) {
   const config = GAME_MODES[mode];
   if (!config || ships.length !== config.fleet.length) return false;
