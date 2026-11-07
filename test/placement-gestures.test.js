@@ -1,6 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { draggedShipPosition, PlacementGestures } from "../src/assets/js/placement-gestures.js";
+import { draggedShipPosition, keyboardMovedShip, PlacementGestures } from "../src/assets/js/placement-gestures.js";
+
+test("keyboard arrows move a placed ship one square", () => {
+  const ship = { length: 3, row: 4, col: 4, orientation: "h" };
+  assert.deepEqual(keyboardMovedShip(ship, "ArrowLeft"), { ...ship, col: 3 });
+  assert.deepEqual(keyboardMovedShip(ship, "ArrowRight"), { ...ship, col: 5 });
+  assert.deepEqual(keyboardMovedShip(ship, "ArrowUp"), { ...ship, row: 3 });
+  assert.deepEqual(keyboardMovedShip(ship, "ArrowDown"), { ...ship, row: 5 });
+});
+
+test("keyboard movement ignores unplaced ships and unrelated keys", () => {
+  assert.equal(keyboardMovedShip({ row: null, col: null }, "ArrowRight"), null);
+  assert.equal(keyboardMovedShip({ row: 2, col: 2 }, "Enter"), null);
+});
 
 test("a horizontal drag keeps the grabbed ship section under the pointer", () => {
   assert.deepEqual(draggedShipPosition(4, 5, "h", 2), { row: 4, col: 3 });

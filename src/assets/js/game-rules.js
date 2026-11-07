@@ -100,7 +100,7 @@ export function syncBoardTabStops(cells, preferredIndex) {
   return targetIndex;
 }
 
-export function createBoard(element, size, { interactive = true, onSelect, label = "water" } = {}) {
+export function createBoard(element, size, { interactive = true, onSelect, onKeyDown, label = "water" } = {}) {
   element.replaceChildren();
   element.style.setProperty("--board-size", size);
   element.setAttribute("role", "grid");
@@ -125,6 +125,10 @@ export function createBoard(element, size, { interactive = true, onSelect, label
         const index = (row * size) + col;
         cell.addEventListener("focus", () => syncBoardTabStops(cells, index));
         cell.addEventListener("keydown", (event) => {
+          if (onKeyDown?.(row, col, event.key)) {
+            event.preventDefault();
+            return;
+          }
           const nextIndex = nextBoardCellIndex(cells, size, index, event.key);
           if (nextIndex === index && !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
           event.preventDefault();
