@@ -267,7 +267,8 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .fleet-item button:focus-visible { outline: 2px solid var(--ink); }
 .fleet-item button:disabled { opacity: .55; cursor: not-allowed; }
 .fleet-item button i { width: 18px; height: 18px; background: var(--water); }
-.fleet-item.is-selected button i, .fleet-item.is-placed button i { background: var(--player); }
+.fleet-item.is-placed button i { background: var(--player); }
+.fleet-item.is-selected button { box-shadow: 0 0 0 2px var(--player); }
 .fleet-item.is-placed { color: var(--muted); }
 .fleet-item span { font: .72rem ui-monospace, monospace; color: var(--muted); text-transform: uppercase; }
 [data-fleet-list] { transition: background-color .12s ease, outline-color .12s ease; }
