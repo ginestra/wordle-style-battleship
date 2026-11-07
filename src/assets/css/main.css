@@ -249,6 +249,8 @@ button.board-cell { cursor: pointer; }
 button.board-cell:disabled { cursor: default; }
 button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { background: var(--water-hover); outline: 2px solid var(--ink); outline-offset: 1px; z-index: 1; }
 .board-cell.is-ship { background: var(--player); }
+.board-cell.is-ship[data-drag-ship], .fleet-item button[data-drag-ship] { touch-action: none; }
+.board-cell.is-drag-source { opacity: .4; }
 .board-cell.is-preview { background: color-mix(in srgb, var(--player) 58%, var(--water)); }
 .board-cell.is-invalid { background: color-mix(in srgb, var(--hit) 70%, var(--water)); }
 .board-cell.is-miss { background: var(--miss); }
@@ -268,6 +270,12 @@ button.board-cell:hover:not(:disabled), button.board-cell:focus-visible { backgr
 .fleet-item.is-selected button i, .fleet-item.is-placed button i { background: var(--player); }
 .fleet-item.is-placed { color: var(--muted); }
 .fleet-item span { font: .72rem ui-monospace, monospace; color: var(--muted); text-transform: uppercase; }
+[data-fleet-list] { transition: background-color .12s ease, outline-color .12s ease; }
+[data-fleet-list].is-drag-over { background: color-mix(in srgb, var(--player) 12%, transparent); outline: 2px dashed var(--player); outline-offset: 4px; }
+.ship-drag-ghost { position: fixed; z-index: 200; display: grid; gap: 4px; width: max-content; pointer-events: none; transform: translate(-50%, -50%); filter: drop-shadow(0 4px 8px color-mix(in srgb, var(--ink) 28%, transparent)); }
+.ship-drag-ghost.is-h { grid-template-columns: repeat(var(--ship-length), 18px); }
+.ship-drag-ghost.is-v { grid-template-rows: repeat(var(--ship-length), 18px); }
+.ship-drag-ghost i { width: 18px; height: 18px; background: var(--player); }
 .fleet-progress-ship { display: flex; gap: 4px; align-items: center; padding: .35rem; }
 .fleet-progress-ship i { width: 18px; aspect-ratio: 1; background: var(--water); }
 .fleet-progress-ship i.is-sunk { background: var(--hit); }

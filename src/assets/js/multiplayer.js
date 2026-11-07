@@ -5,6 +5,7 @@ import { clearHostInvitation, loadHostInvitation, parseInvitationHash, saveHostI
 import { IntervalTicker } from "./interval-ticker.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
 import { multiplayerResult } from "./multiplayer-result.js";
+import { draggedShipPosition, PlacementGestures } from "./placement-gestures.js";
 import { shouldRefreshGame } from "./realtime-state.js";
 import { RefreshQueue } from "./refresh-queue.js";
 import { opponentMoveTime } from "./relative-time.js";
@@ -32,6 +33,8 @@ class MultiplayerController {
     this.isLockingFleet = false;
     this.wasMyTurn = false;
     this.resultDialogDismissed = false;
+    this.shipTap = null;
+    this.placementLocked = false;
     this.placementCells = [];
     this.targetCells = [];
     this.ownCells = [];
@@ -87,9 +90,9 @@ class MultiplayerController {
     this.root.querySelectorAll("[data-copy-invitation]").forEach((button) => button.addEventListener("click", () => {
       if (this.inviteUrl) copyText(this.inviteUrl, "Invitation copied");
     }));
-    this.root.querySelector("[data-rotate]").addEventListener("click", () => { this.orientation = this.orientation === "h" ? "v" : "h"; showToast(`Ships place ${this.orientation === "h" ? "horizontally" : "vertically"}`); });
-    this.root.querySelector("[data-randomize]").addEventListener("click", () => { this.fleet = randomFleet(this.state.game.mode); this.selectedShip = -1; this.renderPlacement(); });
-    this.root.querySelector("[data-clear-fleet]").addEventListener("click", () => { this.resetFleet(); this.renderPlacement(); });
+    this.root.querySelector("[data-rotate]").addEventListener("click", () => this.rotateSelectedShip());
+    this.root.querySelector("[data-randomize]").addEventListener("click", () => { this.cancelShipTap(); this.fleet = randomFleet(this.state.game.mode); this.selectedShip = -1; this.renderPlacement(); });
+    this.root.querySelector("[data-clear-fleet]").addEventListener("click", () => { this.cancelShipTap(); this.resetFleet(); this.renderPlacement(); });
     this.root.querySelector("[data-ready]").addEventListener("click", () => this.lockFleet());
     this.root.querySelector("[data-resign-game]").addEventListener("click", () => this.showResignDialog());
     this.root.querySelector("[data-cancel-resign]").addEventListener("click", () => this.closeResignDialog());
@@ -97,6 +100,19 @@ class MultiplayerController {
     this.root.querySelector("[data-dismiss-result]").addEventListener("click", () => this.dismissResultDialog());
     this.root.querySelector("[data-result-dialog]").addEventListener("cancel", () => { this.resultDialogDismissed = true; });
     document.addEventListener("visibilitychange", () => this.handleVisibilityChange());
+    this.placementGestures = new PlacementGestures({
+      board: this.root.querySelector("[data-placement-board]"),
+      list: this.root.querySelector("[data-fleet-list]"),
+      getShip: (index) => this.fleet[index],
+      canStart: () => !this.placementLocked,
+      onStart: (index) => this.startDraggingShip(index),
+      onPreview: (index, row, col, offset) => this.previewDraggedShip(index, row, col, offset),
+      onListPreview: () => this.root.querySelector("[data-fleet-list]").classList.add("is-drag-over"),
+      onClearPreview: () => this.clearPlacementDragPreview(),
+      onBoardDrop: (index, row, col, offset) => this.dropShipOnBoard(index, row, col, offset),
+      onListDrop: (index) => this.returnShipToFleet(index),
+      onEnd: () => this.placementCells.forEach((cell) => cell.classList.remove("is-drag-source"))
+    });
   }
 
   async createGame() {
@@ -264,19 +280,31 @@ class MultiplayerController {
     const config = GAME_MODES[this.state.game.mode];
     const me = this.state.players.find((player) => player.user_id === this.userId);
     const locked = Boolean(me?.ready || this.isLockingFleet);
+    this.placementLocked = locked;
+    if (locked) this.cancelShipTap();
     if (!this.placementCells.length || this.placementCells.length !== config.size ** 2) {
       this.placementCells = createBoard(this.root.querySelector("[data-placement-board]"), config.size, {
-        onSelect: (row, col) => this.placeSelectedShip(row, col), label: "fleet placement"
+        onSelect: (row, col) => this.handlePlacementCellSelect(row, col), label: "fleet placement"
       });
     }
     this.placementCells.forEach((cell) => {
       cell.className = "board-cell";
       cell.disabled = locked;
+      delete cell.dataset.dragShip;
+      delete cell.dataset.shipOffset;
+      cell.setAttribute("aria-label", `${coordinate(Number(cell.dataset.row), Number(cell.dataset.col))}, fleet placement`);
     });
     syncBoardTabStops(this.placementCells);
-    this.fleet.forEach((ship) => {
+    this.fleet.forEach((ship, shipIndex) => {
       if (ship.row === null) return;
-      cellsForShip(ship).forEach(({ row, col }) => cellAt(this.placementCells, config.size, row, col)?.classList.add("is-ship"));
+      cellsForShip(ship).forEach(({ row, col }, offset) => {
+        const cell = cellAt(this.placementCells, config.size, row, col);
+        if (!cell) return;
+        cell.classList.add("is-ship");
+        cell.dataset.dragShip = shipIndex;
+        cell.dataset.shipOffset = offset;
+        cell.setAttribute("aria-label", `${coordinate(row, col)}, ship length ${ship.length}. Activate to rotate; activate twice to return to fleet.`);
+      });
     });
 
     const list = this.root.querySelector("[data-fleet-list]");
@@ -288,9 +316,17 @@ class MultiplayerController {
       const button = document.createElement("button");
       button.type = "button";
       button.disabled = locked;
-      button.innerHTML = Array.from({ length: ship.length }, () => "<i></i>").join("");
-      button.setAttribute("aria-label", `${placed ? "Move" : "Place"} ship length ${ship.length}`);
-      button.addEventListener("click", () => { this.selectedShip = index; this.orientation = ship.orientation || "h"; this.renderPlacement(); });
+      button.dataset.dragShip = index;
+      Array.from({ length: ship.length }, (_, offset) => {
+        const block = document.createElement("i");
+        block.dataset.dragShip = index;
+        block.dataset.shipOffset = offset;
+        button.append(block);
+      });
+      button.setAttribute("aria-label", placed
+        ? `Ship length ${ship.length}, placed. Activate to rotate; activate twice to return to fleet, or drag to move.`
+        : `Ship length ${ship.length}, unplaced. Drag to the board or activate to select.`);
+      button.addEventListener("click", () => this.handleFleetShipClick(index));
       const status = document.createElement("span");
       status.textContent = placed ? "Placed" : "Unplaced";
       row.append(button, status);
@@ -315,7 +351,127 @@ class MultiplayerController {
     this.renderPlacement();
   }
 
+  handlePlacementCellSelect(row, col) {
+    if (this.placementGestures.consumeClick()) return;
+    const config = GAME_MODES[this.state.game.mode];
+    const cell = cellAt(this.placementCells, config.size, row, col);
+    const shipIndex = cell?.dataset.dragShip;
+    if (shipIndex !== undefined) this.queuePlacedShipTap(Number(shipIndex));
+    else this.placeSelectedShip(row, col);
+  }
+
+  handleFleetShipClick(index) {
+    if (this.placementGestures.consumeClick()) return;
+    const ship = this.fleet[index];
+    this.selectedShip = index;
+    this.orientation = ship.orientation || "h";
+    if (ship.row === null) this.renderPlacement();
+    else this.queuePlacedShipTap(index);
+  }
+
+  queuePlacedShipTap(index) {
+    if (this.shipTap?.index === index) {
+      this.cancelShipTap();
+      this.returnShipToFleet(index);
+      return;
+    }
+    this.cancelShipTap();
+    this.shipTap = {
+      index,
+      timer: window.setTimeout(() => {
+        this.shipTap = null;
+        this.rotateShip(index);
+      }, 350)
+    };
+  }
+
+  cancelShipTap() {
+    if (!this.shipTap) return;
+    window.clearTimeout(this.shipTap.timer);
+    this.shipTap = null;
+  }
+
+  rotateSelectedShip() {
+    this.cancelShipTap();
+    const ship = this.fleet[this.selectedShip];
+    if (ship?.row !== null && ship?.row !== undefined) {
+      this.rotateShip(this.selectedShip);
+      return;
+    }
+    this.orientation = this.orientation === "h" ? "v" : "h";
+    if (ship) ship.orientation = this.orientation;
+    showToast(`Ship will place ${this.orientation === "h" ? "horizontally" : "vertically"}`);
+    this.renderPlacement();
+  }
+
+  rotateShip(index) {
+    const ship = this.fleet[index];
+    if (!ship || ship.row === null) return;
+    const candidate = { ...ship, orientation: ship.orientation === "h" ? "v" : "h" };
+    if (!canPlaceShip(candidate, this.fleet, GAME_MODES[this.state.game.mode].size, index)) {
+      showToast("That ship cannot rotate here");
+      return;
+    }
+    this.fleet[index] = candidate;
+    this.selectedShip = index;
+    this.orientation = candidate.orientation;
+    this.renderPlacement();
+    showToast("Ship rotated");
+  }
+
+  returnShipToFleet(index) {
+    this.cancelShipTap();
+    const ship = this.fleet[index];
+    if (!ship || ship.row === null) return;
+    this.fleet[index] = { ...ship, row: null, col: null };
+    this.selectedShip = index;
+    this.orientation = ship.orientation;
+    this.renderPlacement();
+    showToast("Ship returned to fleet");
+  }
+
+  startDraggingShip(index) {
+    this.cancelShipTap();
+    this.selectedShip = index;
+    this.orientation = this.fleet[index].orientation || "h";
+    this.root.querySelectorAll(`[data-placement-board] [data-drag-ship="${index}"]`).forEach((cell) => cell.classList.add("is-drag-source"));
+  }
+
+  draggedShipCandidate(index, row, col, offset) {
+    const ship = this.fleet[index];
+    const position = draggedShipPosition(row, col, ship.orientation || "h", offset);
+    return { ...ship, ...position, orientation: ship.orientation || "h" };
+  }
+
+  previewDraggedShip(index, row, col, offset) {
+    const config = GAME_MODES[this.state.game.mode];
+    const candidate = this.draggedShipCandidate(index, row, col, offset);
+    const valid = canPlaceShip(candidate, this.fleet, config.size, index);
+    cellsForShip(candidate).forEach(({ row: targetRow, col: targetCol }) => {
+      cellAt(this.placementCells, config.size, targetRow, targetCol)?.classList.add(valid ? "is-preview" : "is-invalid");
+    });
+  }
+
+  clearPlacementDragPreview() {
+    this.placementCells.forEach((cell) => cell.classList.remove("is-preview", "is-invalid"));
+    this.root.querySelector("[data-fleet-list]").classList.remove("is-drag-over");
+  }
+
+  dropShipOnBoard(index, row, col, offset) {
+    const config = GAME_MODES[this.state.game.mode];
+    const candidate = this.draggedShipCandidate(index, row, col, offset);
+    if (!canPlaceShip(candidate, this.fleet, config.size, index)) {
+      showToast("Ships cannot overlap, touch, or leave the board");
+      this.renderPlacement();
+      return;
+    }
+    this.fleet[index] = candidate;
+    this.selectedShip = this.fleet.findIndex((ship) => ship.row === null);
+    this.renderPlacement();
+  }
+
   async lockFleet() {
+    this.cancelShipTap();
     if (!validateFleet(this.state.game.mode, this.fleet)) return;
     const button = this.root.querySelector("[data-ready]");
     this.isLockingFleet = true;
