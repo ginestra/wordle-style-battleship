@@ -1,16 +1,5 @@
 const dragThreshold = 6;
 
-export function keyboardMovedShip(ship, key) {
-  const movement = {
-    ArrowLeft: [0, -1],
-    ArrowRight: [0, 1],
-    ArrowUp: [-1, 0],
-    ArrowDown: [1, 0]
-  }[key];
-  if (!movement || ship.row === null || ship.col === null) return null;
-  return { ...ship, row: ship.row + movement[0], col: ship.col + movement[1] };
-}
-
 export function draggedShipPosition(row, col, orientation, grabbedOffset) {
   return {
     row: row - (orientation === "v" ? grabbedOffset : 0),

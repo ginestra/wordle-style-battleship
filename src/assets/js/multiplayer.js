@@ -1,11 +1,11 @@
 import { copyText, showToast } from "./ui.js";
 import { opponentHitCount, renderGameProgress } from "./fleet-progress.js";
-import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, firstValidShipPlacement, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
+import { GAME_MODES, canPlaceShip, cellAt, cellsForShip, coordinate, createBoard, firstValidShipPlacement, nextValidShipPlacement, randomFleet, syncBoardTabStops, validateFleet } from "./game-rules.js";
 import { clearHostInvitation, loadHostInvitation, parseInvitationHash, saveHostInvitation } from "./invitation.js";
 import { IntervalTicker } from "./interval-ticker.js";
 import { MultiplayerApi } from "./multiplayer-api.js";
 import { multiplayerResult } from "./multiplayer-result.js";
-import { draggedShipPosition, keyboardMovedShip, PlacementGestures } from "./placement-gestures.js";
+import { draggedShipPosition, PlacementGestures } from "./placement-gestures.js";
 import { shouldRefreshGame } from "./realtime-state.js";
 import { RefreshQueue } from "./refresh-queue.js";
 import { opponentMoveTime } from "./relative-time.js";
@@ -305,7 +305,7 @@ class MultiplayerController {
         cell.classList.add("is-ship");
         cell.dataset.dragShip = shipIndex;
         cell.dataset.shipOffset = offset;
-        cell.setAttribute("aria-label", `${coordinate(row, col)}, ship length ${ship.length}. Use arrow keys to move, Enter to rotate, or Delete to return it to the fleet.`);
+        cell.setAttribute("aria-label", `${coordinate(row, col)}, ship length ${ship.length}. Use arrow keys to move to the next valid position, Enter to rotate, or Delete to return it to the fleet.`);
       });
     });
 
@@ -384,9 +384,15 @@ class MultiplayerController {
   }
 
   moveShipWithKeyboard(index, key, focusedOffset) {
-    const candidate = keyboardMovedShip(this.fleet[index], key);
-    if (!candidate || !canPlaceShip(candidate, this.fleet, GAME_MODES[this.state.game.mode].size, index)) {
-      showToast("That ship cannot move there");
+    const candidate = nextValidShipPlacement(
+      this.fleet[index],
+      key,
+      this.fleet,
+      GAME_MODES[this.state.game.mode].size,
+      index
+    );
+    if (!candidate) {
+      showToast("No valid position in that direction");
       return;
     }
     this.fleet[index] = candidate;

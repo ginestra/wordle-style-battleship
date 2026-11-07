@@ -41,6 +41,26 @@ export function firstValidShipPlacement(ship, ships, boardSize, ignoreIndex = -1
   return null;
 }
 
+export function nextValidShipPlacement(ship, key, ships, boardSize, ignoreIndex = -1) {
+  const movement = {
+    ArrowLeft: [0, -1],
+    ArrowRight: [0, 1],
+    ArrowUp: [-1, 0],
+    ArrowDown: [1, 0]
+  }[key];
+  if (!movement || ship.row === null || ship.col === null) return null;
+
+  for (let distance = 1; distance <= boardSize; distance += 1) {
+    const candidate = {
+      ...ship,
+      row: ship.row + (movement[0] * distance),
+      col: ship.col + (movement[1] * distance)
+    };
+    if (canPlaceShip(candidate, ships, boardSize, ignoreIndex)) return candidate;
+  }
+  return null;
+}
+
 export function validateFleet(mode, ships) {
   const config = GAME_MODES[mode];
   if (!config || ships.length !== config.fleet.length) return false;
